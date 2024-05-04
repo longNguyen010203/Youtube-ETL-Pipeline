@@ -1,0 +1,9 @@
+dagster==1.7.4
+dagit==1.7.4
+pandas==2.2.2
+polars==0.20.23
+pyarrow==16.0.0
+minio==7.2.7
+pymysql==1.1.0
+cryptography==42.0.5
+psycopg2-binary==2.9.9
