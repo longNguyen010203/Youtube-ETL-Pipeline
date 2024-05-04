@@ -1,0 +1,174 @@
+version: "3.9"
+
+
+services:
+
+  # MySQL
+  de_mysql:
+    image: mysql:8.0
+    container_name: de_mysql
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./dataset/youTube_trending_video:/tmp/youTube_trending_video
+      - ./load_dataset:/tmp/load_dataset
+    ports:
+      - "3306:3306"
+    env_file: .env
+    networks:
+      - de_network
+
+  # MinIO
+  minio:
+    hostname: minio
+    image: minio/minio
+    container_name: minio
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    command: [ "server", "/data", "--console-address", ":9001" ]
+    volumes:
+      - ./minio:/data
+    env_file: .env
+    networks:
+      - de_network
+
+  # Minio Client
+  mc:
+    image: minio/mc
+    container_name: mc
+    hostname: mc
+    env_file: .env
+    entrypoint: >
+      /bin/sh -c " until (/usr/bin/mc config host add minio
+      http://minio:9000 minio minio123) do echo '...waiting...' && sleep 1;
+      done; /usr/bin/mc mb minio/lakehouse; /usr/bin/mc policy set public
+      minio/lakehouse; exit 0; "
+    depends_on:
+      - minio
+    networks:
+      - de_network
+
+  # Pipelines
+  etl_pipeline: 
+    build:
+      context: ./etl_pipeline
+      dockerfile: Dockerfile
+    container_name: etl_pipeline
+    image: etl_pipeline:latest
+    volumes:
+      - ./etl_pipeline:/opt/dagster/app
+    ports:
+      - "4040:4040"
+    env_file: .env
+    networks:
+      - de_network
+
+  de_psql:
+    image: postgres:15
+    container_name: de_psql
+    volumes:
+      - ./postgresql:/var/lib/postgresql/data
+      - ./load_dataset:/tmp/load_dataset
+    ports:
+      - "5432:5432"
+    env_file: .env
+    networks:
+      - de_network
+
+  # Dagster
+  de_dagster:
+    build:
+      context: ./docker-images/dagster/
+    container_name: de_dagster
+    image: de_dagster
+
+  de_dagster_dagit:
+    image: de_dagster:latest
+    entrypoint:
+      - dagit
+      - -h
+      - "0.0.0.0"
+      - -p
+      - "3001"
+      - -w
+      - workspace.yaml
+    container_name: de_dagster_dagit
+    expose:
+      - "3001"
+    ports:
+      - "3001:3001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dagster_home:/opt/dagster/dagster_home
+    env_file: .env
+    networks:
+      - de_network
+
+  de_dagster_daemon:
+    image: de_dagster:latest
+    entrypoint:
+      - dagster-daemon
+      - run
+    container_name: de_dagster_daemon
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dagster_home:/opt/dagster/dagster_home
+    env_file: .env
+    networks:
+      - de_network
+
+  # Spark
+  # spark-master:
+  #   image: cluster-apache-spark:3.0.2
+  #   ports:
+  #     - "9090:8080"
+  #     - "7077:7077"
+  #   volumes:
+  #      - ./apps:/opt/spark-apps
+  #      - ./data:/opt/spark-data
+  #   environment:
+  #     - SPARK_LOCAL_IP=spark-master
+  #     - SPARK_WORKLOAD=master
+
+  # spark-worker-a:
+  #   image: cluster-apache-spark:3.0.2
+  #   ports:
+  #     - "9091:8080"
+  #     - "7000:7000"
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MASTER=spark://spark-master:7077
+  #     - SPARK_WORKER_CORES=1
+  #     - SPARK_WORKER_MEMORY=1G
+  #     - SPARK_DRIVER_MEMORY=1G
+  #     - SPARK_EXECUTOR_MEMORY=1G
+  #     - SPARK_WORKLOAD=worker
+  #     - SPARK_LOCAL_IP=spark-worker-a
+  #   volumes:
+  #      - ./apps:/opt/spark-apps
+  #      - ./data:/opt/spark-data
+
+  # spark-worker-b:
+  #   image: cluster-apache-spark:3.0.2
+  #   ports:
+  #     - "9092:8080"
+  #     - "7001:7000"
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MASTER=spark://spark-master:7077
+  #     - SPARK_WORKER_CORES=1
+  #     - SPARK_WORKER_MEMORY=1G
+  #     - SPARK_DRIVER_MEMORY=1G
+  #     - SPARK_EXECUTOR_MEMORY=1G
+  #     - SPARK_WORKLOAD=worker
+  #     - SPARK_LOCAL_IP=spark-worker-b
+  #   volumes:
+  #       - ./apps:/opt/spark-apps
+  #       - ./data:/opt/spark-data
+
+networks:
+  de_network:
+    driver: bridge
+    name: de_network
