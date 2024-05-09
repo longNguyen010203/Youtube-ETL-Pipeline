@@ -4,7 +4,7 @@ from psycopg2 import sql
 import psycopg2.extras
 import psycopg2
 
-import pandas as pd
+import polars as pl
 from dagster import IOManager, OutputContext, InputContext
 from sqlalchemy import create_engine
 
@@ -29,12 +29,12 @@ class PostgreSQLIOManager(IOManager):
     def __init__(self, config):
         self._config = config
     
-    def load_input(self, context: InputContext) -> pd.DataFrame:
+    def load_input(self, context: InputContext) -> pl.DataFrame:
         pass
 
-    def handle_output(self, context: OutputContext, obj: pd.DataFrame):
+    def handle_output(self, context: OutputContext, obj: pl.DataFrame):
         schema, table = context.asset_key.path[-2], context.asset_key.path[-1]
-        tmp_tbl = f"{table}_tmp_{datetime.now().strftime('%Y_%m')}"
+        tmp_tbl = f"{table}_tmp_{datetime.now().strftime('%Y_%m_%d')}"
         
         with connect_psql(self._config) as db_conn:
             primary_keys = (context.metadata or {}).get("primary_keys", [])
@@ -50,15 +50,15 @@ class PostgreSQLIOManager(IOManager):
                     columns = sql.SQL(",").join(
                         sql.Identifier(name.lower()) for name in obj.columns
                     )
-                    # context.log.info(f"Table {table} with columns: {columns}")
+                    context.log.info(f"Table {table} with columns: {columns}")
                     values = sql.SQL(",").join(sql.Placeholder() for _ in obj.columns)
                     
                     context.log.debug("Inserting data into temp table")
                     insert_query = sql.SQL("INSERT INTO {} ({}) VALUES({});").format(
                         sql.Identifier(tmp_tbl), columns, values
                     )
-                    psycopg2.extras.execute_batch(cursor, insert_query, obj.values)
-                    # context.log.info(f"Insert into data for table {table} Success !!!")
+                    psycopg2.extras.execute_batch(cursor, insert_query, obj.rows())
+                    context.log.info(f"Insert into data for table {table} Success !!!")
                     
                     db_conn.commit()
                     
