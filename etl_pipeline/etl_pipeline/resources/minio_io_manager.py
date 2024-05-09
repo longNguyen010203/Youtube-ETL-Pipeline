@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Union
 
-import pandas as pd
+import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 from dagster import IOManager, OutputContext, InputContext
@@ -33,7 +33,7 @@ class MinIOIOManager(IOManager):
         layer, schema, table = context.asset_key.path
         key = "/".join([layer, schema, table.replace(f"{layer}_", "")])
         tmp_file_path = "/tmp/file-{}-{}.parquet".format(
-            datetime.today().strftime("%Y%m"), 
+            datetime.today().strftime("%Y%m%d%H%M%S"), 
             "-".join(context.asset_key.path)
         )
         
@@ -47,11 +47,10 @@ class MinIOIOManager(IOManager):
             context.log.info(f"INFO: {key}.pq, {tmp_file_path}")
             return f"{key}.pq", tmp_file_path
 
-    def handle_output(self, context: OutputContext, obj: pd.DataFrame):
+    def handle_output(self, context: OutputContext, obj: pl.DataFrame):
         # convert to parquet format
         key_name, tmp_file_path = self._get_path(context)
-        table = pa.Table.from_pandas(obj)
-        pq.write_table(table, tmp_file_path)
+        obj.write_parquet(tmp_file_path)
         
         # upload to MinIO
         try:
@@ -78,7 +77,7 @@ class MinIOIOManager(IOManager):
         except Exception as e:
             raise e
 
-    def load_input(self, context: InputContext) -> pd.DataFrame:
+    def load_input(self, context: InputContext) -> pl.DataFrame:
         bucket_name = self._config.get("bucket")
         key_name, tmp_file_path = self._get_path(context)
         
@@ -92,7 +91,7 @@ class MinIOIOManager(IOManager):
                     print(f"Bucket {bucket_name} already exists")
                     
                 client.fget_object(bucket_name, key_name, tmp_file_path)
-                pd_data = pd.read_parquet(tmp_file_path)
+                pd_data = pl.read_parquet(tmp_file_path)
                 return pd_data
             
         except Exception as e:
