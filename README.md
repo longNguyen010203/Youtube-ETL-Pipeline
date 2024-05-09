@@ -1,0 +1,1 @@
+![Hình minh họa](/Youtube-ETL-Pipeline/images/DataFlow.png)
