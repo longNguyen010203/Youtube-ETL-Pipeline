@@ -11,7 +11,7 @@ services:
       - ./dataset/youTube_trending_video:/tmp/youTube_trending_video
       - ./load_dataset:/tmp/load_dataset
     ports:
-      - "3306:3306"
+      - 3306:3306
     env_file: .env
     networks:
       - de_network
@@ -21,8 +21,8 @@ services:
     image: minio/minio
     container_name: minio
     ports:
-      - "9001:9001"
-      - "9000:9000"
+      - 9001:9001
+      - 9000:9000
     command: [ "server", "/data", "--console-address", ":9001" ]
     volumes:
       - ./minio:/data
@@ -54,7 +54,7 @@ services:
     volumes:
       - ./etl_pipeline:/opt/dagster/app
     ports:
-      - "4040:4040"
+      - 4040:4040
     env_file: .env
     networks:
       - de_network
@@ -66,7 +66,7 @@ services:
       - ./postgresql:/var/lib/postgresql/data
       - ./load_dataset:/tmp/load_dataset
     ports:
-      - "5432:5432"
+      - 5432:5432
     env_file: .env
     networks:
       - de_network
@@ -91,7 +91,7 @@ services:
     expose:
       - "3001"
     ports:
-      - "3001:3001"
+      - 3001:3001
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./dagster_home:/opt/dagster/dagster_home
@@ -111,13 +111,31 @@ services:
     env_file: .env
     networks:
       - de_network
+
+  # Jupyter
+  # de_notebook:
+  #   image: jupyter/all-spark-notebook:python-3.9
+  #   container_name: de_notebook
+  #   command: [ "start-notebook.sh", "--NotebookApp.token=" ]
+  #   ports:
+  #     - 8888:8888
+  #   volumes:
+  #     - ./notebooks/work:/home/jovyan/work
+  #   env_file: .env
+  #   networks:
+  #     - de_network
       
   # Spark
   spark-master:
+    # build:
+    #   context: ./docker-images/spark
+    #   dockerfile: Dockerfile
+    # image: spark-master:latest
     image: docker.io/bitnami/spark:3.5.0
     container_name: spark-master
     volumes:
-       - ./data:/opt/spark-data
+      # - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - ./data:/opt/spark-data
     env_file: .env.spark_master
     expose:
       - "7077"

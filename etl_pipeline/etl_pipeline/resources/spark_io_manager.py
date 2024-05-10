@@ -11,6 +11,8 @@ def create_spark_session(config, appName="Spark IO Manager"):
         SparkSession.builder
             .appName(appName)
             .master(config["spark_master_url"])
+            .config("spark.driver.memory", "3g")
+            .config("spark.executor.memory", "3g")
             .config("spark.hadoop.fs.s3a.endpoint", "http://" + config["endpoint_url"])
             .config("spark.hadoop.fs.s3a.access.key", str(config["aws_access_key_id"]))
             .config("spark.hadoop.fs.s3a.secret.key", str(config["aws_secret_access_key"]))
