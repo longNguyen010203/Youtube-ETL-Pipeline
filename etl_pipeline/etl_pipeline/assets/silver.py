@@ -1,6 +1,7 @@
 import polars as pl
 import pandas as pd
 from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.types import IntegerType
 
 from dagster import asset, AssetExecutionContext
 from dagster import Output, MetadataValue
@@ -29,25 +30,21 @@ def silver_videoCategory_clean(context: AssetExecutionContext,
     """ 
         Clean 'videoCategory_trending_data' and load to silver layer in MinIO
     """
-    # spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
-    # context.log.info("Get Object Spark Session")
-    # spark_df: DataFrame = spark.createDataFrame(videoCategory_trending_data.to_pandas())
-    # context.log.info("Convert polars dataframe to pyspark dataframe")
-    # spark_df = spark_df.orderBy(spark_df["categoryId"])
-    # context.log.info("Sort pyspark dataframe by categoryId column")
-    # spark_df = spark_df.toPandas()
-    # spark_df = pl.DataFrame(spark_df)
-    spark = SparkSession.builder.appName("Test").master("spark://spark-master:7077").getOrCreate()
-    spark_df = spark.createDataFrame(videoCategory_trending_data.to_pandas())
+    spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
+    spark_df: DataFrame = spark.createDataFrame(videoCategory_trending_data.to_pandas())
+    spark_df = spark_df.withColumn("categoryId", spark_df["categoryId"].cast(IntegerType()))
     spark_df = spark_df.orderBy(spark_df["categoryId"])
-    spark_df = pl.DataFrame(spark_df.toPandas())
+    polars_df = pl.DataFrame(spark_df.toPandas())
+    context.log.info("Get Object Spark Session")
+    context.log.info("Convert polars dataframe to pyspark dataframe")
+    context.log.info("Sort pyspark dataframe by categoryId column")
     
     return Output(
-        value=spark_df,
+        value=polars_df,
         metadata={
             "File Name": MetadataValue.text("silver_videoCategory_clean.pq"),
-            "Number Columns": MetadataValue.int(len(spark_df.columns)),
-            "Number Records": MetadataValue.int(spark_df.count())
+            "Number Columns": MetadataValue.int(polars_df.shape[1]),
+            "Number Records": MetadataValue.int(polars_df.shape[0])
         }
     )
     
@@ -75,13 +72,13 @@ def silver_linkVideos_clean(context: AssetExecutionContext,
         Clean 'linkVideos_trending_data' and load to silver layer in MinIO
     """
     spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
-    linkVideos: DataFrame = spark.createDataFrame(linkVideos_trending_data)
-    context.log.info("Convert polars dataframe to pyspark dataframe")
+    pl_data: pl.DataFrame = context.resources.youtube_io_manager.get_DataFrame(context, "video_id")
+    linkVideos: DataFrame = spark.createDataFrame(linkVideos_trending_data.to_pandas())
+    trending: DataFrame = spark.createDataFrame(pl_data.to_pandas())
     linkVideos.createOrReplaceTempView("linkVideos")
-    context.log.info("Convert pyspark dataframe to View in SQL query")
-    pl_data: pl.DataFrame = context.resources.youtube_io_manager.downLoad_linkVideos(context)
-    trending: DataFrame = spark.createDataFrame(pl_data)
     trending.createOrReplaceTempView("trending")
+    context.log.info("Convert polars dataframe to pyspark dataframe")
+    context.log.info("Convert pyspark dataframe to View in SQL query")
     query = """ 
                 SELECT t.*
                 FROM linkVideos lv RIGHT JOIN trending t
@@ -95,8 +92,8 @@ def silver_linkVideos_clean(context: AssetExecutionContext,
         value=spark_df,
         metadata={
             "File Name": MetadataValue.text("silver_linkVideos_clean.pq"),
-            "Number Columns": MetadataValue.int(len(spark_df.columns)),
-            "Number Records": MetadataValue.int(spark_df.count())
+            "Number Columns": MetadataValue.int(spark_df.shape[1]),
+            "Number Records": MetadataValue.int(spark_df.shape[0])
         }
     )
     

@@ -1,4 +1,4 @@
-FROM python:3.9.16-slim
+FROM python:3.11.6-slim
 
 ARG openjdk_version="17"
 
@@ -15,9 +15,9 @@ USER root
 #       ssh && \
 #       apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# RUN apt-get update --yes && \
-#     apt-get install --yes curl "openjdk-${openjdk_version}-jre-headless" ca-certificates-java procps && \
-#     apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update --yes && \
+    apt-get install --yes curl "openjdk-${openjdk_version}-jre-headless" ca-certificates-java procps && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
 # RUN curl -O -L https://dlcdn.apache.org/spark/spark-3.5.0/spark-3.5.0-bin-hadoop3.tgz \

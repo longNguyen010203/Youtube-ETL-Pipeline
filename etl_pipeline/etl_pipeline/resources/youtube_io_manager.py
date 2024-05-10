@@ -43,6 +43,7 @@ class YoutubeIOManager(IOManager):
 
         layer, schema, table = context.asset_key.path
         table = "youtube_trending_data"
+        layer = "bronze"
         key = "/".join([layer, schema, table.replace(f"{layer}_", "")])
         
         key_names: list[str] = []
@@ -76,10 +77,9 @@ class YoutubeIOManager(IOManager):
             start += 50
             end += 50
         return lists
-        
-        
-    def downLoad_videoCategories(self, context) -> pl.DataFrame:  
-        
+    
+    
+    def get_DataFrame(self, context, field: str) -> pl.DataFrame:
         bucket_name = self._config.get("bucket")
         key_names, tmp_file_paths = self._get_path(context)
         
@@ -98,11 +98,17 @@ class YoutubeIOManager(IOManager):
         list_dfs: list[pl.DataFrame] = []
         for key_name, tmp_file_path in zip(key_names, tmp_file_paths):
             client.fget_object(bucket_name, key_name, tmp_file_path)
-            df = pl.read_parquet(tmp_file_path)["categoryId"].unique()
+            df = pl.read_parquet(tmp_file_path)[field].unique()
             list_dfs.append(df)
             os.remove(tmp_file_path)
             
         pl_data = pl.concat(list_dfs)
+        return pl_data
+        
+        
+    def downLoad_videoCategories(self, context) -> pl.DataFrame:  
+        
+        pl_data = self.get_DataFrame(context, "categoryId")
         
         with youtube_client(self._config) as service:
             categoryNames: list[str] = []
@@ -134,31 +140,9 @@ class YoutubeIOManager(IOManager):
 
     
     def downLoad_linkVideos(self, context) -> pl.DataFrame:
-        
-        bucket_name = self._config.get("bucket")
-        key_names, tmp_file_paths = self._get_path(context)
-        
-        try:
-            with connect_minio(self._config) as client:
-                # Make bucket if not exist.
-                found = client.bucket_exists(bucket_name)
-                if not found:
-                    client.make_bucket(bucket_name)
-                else:
-                    print(f"Bucket {bucket_name} already exists")
-                    
-        except Exception as e:
-                raise e
-        
-        list_dfs: list[pl.DataFrame] = []
-        for key_name, tmp_file_path in zip(key_names, tmp_file_paths):
-            client.fget_object(bucket_name, key_name, tmp_file_path)
-            df = pl.read_parquet(tmp_file_path)["video_id"].unique()
-            list_dfs.append(df)
-            os.remove(tmp_file_path)
             
-        pl_data = pl.concat(list_dfs)
-                
+        pl_data = self.get_DataFrame(context, "video_id")
+            
         with youtube_client(self._config) as service:
             link_videos: list[str] = []
             videoIds: list[str] = []
@@ -196,7 +180,24 @@ class YoutubeIOManager(IOManager):
     
     
     def load_input(self, context: InputContext) -> pl.DataFrame:
-        pass
+        bucket_name = self._config.get("bucket")
+        key_name, tmp_file_path = self._get_path(context)
+        
+        try:
+            with connect_minio(self._config) as client:
+                # Make bucket if not exist.
+                found = client.bucket_exists(bucket_name)
+                if not found:
+                    client.make_bucket(bucket_name)
+                else:
+                    print(f"Bucket {bucket_name} already exists")
+                    
+                client.fget_object(bucket_name, key_name, tmp_file_path)
+                pd_data = pl.read_parquet(tmp_file_path)
+                return pd_data
+            
+        except Exception as e:
+            raise e
     
 
 
