@@ -50,7 +50,7 @@ def silver_videoCategory_clean(context: AssetExecutionContext,
         )
     },
     deps=["bronze_youtube_trending_data"],
-    name="silver_videoCategory_clean",
+    name="silver_linkVideos_clean",
     required_resource_keys={
         "spark_io_manager",
         "youtube_io_manager"
