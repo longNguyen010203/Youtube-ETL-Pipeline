@@ -1,1 +1,1 @@
-![Hình minh họa](/Youtube-ETL-Pipeline/images/DataFlow.png)
+![Hình minh họa](/images/DataFlow.png)
