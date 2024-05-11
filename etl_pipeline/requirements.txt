@@ -9,4 +9,4 @@ cryptography==42.0.5
 psycopg2-binary==2.9.9
 dagster-postgres
 google-api-python-client==2.127.0
-pyspark==3.5.0
+pyspark==3.5.1

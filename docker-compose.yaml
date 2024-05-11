@@ -131,10 +131,10 @@ services:
     #   context: ./docker-images/spark
     #   dockerfile: Dockerfile
     # image: spark-master:latest
-    image: docker.io/bitnami/spark:3.5.0
+    image: docker.io/bitnami/spark:3.5.1
     container_name: spark-master
     volumes:
-      # - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./data:/opt/spark-data
     env_file: .env.spark_master
     expose:
@@ -146,7 +146,7 @@ services:
       - de_network
 
   spark-worker:
-    image: docker.io/bitnami/spark:3.5.0
+    image: docker.io/bitnami/spark:3.5.1
     depends_on: 
       - spark-master
     deploy: 

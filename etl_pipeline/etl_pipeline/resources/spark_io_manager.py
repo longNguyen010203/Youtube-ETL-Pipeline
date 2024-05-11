@@ -22,9 +22,14 @@ def create_spark_session(config, appName="Spark IO Manager"):
     #         .getOrCreate()
     # )
     
-    spark = SparkSession.builder.appName(appName) \
-                                .master(config["spark_master_url"]) \
+    spark = (SparkSession.builder.appName(appName) 
+                                .master(config["spark_master_url"]) 
+                                .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") 
+                                .config("spark.hadoop.fs.s3a.endpoint", "http://" + config["endpoint_url"]) 
+                                .config("spark.hadoop.fs.s3a.access.key", str(config["aws_access_key_id"])) 
+                                .config("spark.hadoop.fs.s3a.secret.key", str(config["aws_secret_access_key"])) 
                                 .getOrCreate()
+    )
                                 
     try:
         yield spark

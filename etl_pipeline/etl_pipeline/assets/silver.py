@@ -133,4 +133,21 @@ def silver_trending_clean(context: AssetExecutionContext,
         }
     )
     
+
+@asset(
+    required_resource_keys={"spark_io_manager"}
+)
+def read_file_minio(context: AssetExecutionContext) -> Output[DataFrame]:
+    
+    path = "s3a://lakehouse/bronze/youtube/linkVideos_trending_data.pq"
+    spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
+    df = spark.read.parquet(path)
+    
+    return Output(
+        value=df,
+        metadata={
+            "records": MetadataValue.int(df.count()),
+            "Columns": MetadataValue.int(len(df.columns))
+        }
+    )
     
