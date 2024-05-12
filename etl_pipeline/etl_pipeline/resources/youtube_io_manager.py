@@ -100,9 +100,11 @@ class YoutubeIOManager(IOManager):
             client.fget_object(bucket_name, key_name, tmp_file_path)
             df = pl.read_parquet(tmp_file_path)[field].unique()
             list_dfs.append(df)
+            
+            context.log.info(f"INFO -> key_name: {key_name}, tmp_file_path: {tmp_file_path}")
             os.remove(tmp_file_path)
             
-        pl_data = pl.concat(list_dfs)
+        pl_data = pl.concat(list_dfs).unique()
         return pl_data
         
         
