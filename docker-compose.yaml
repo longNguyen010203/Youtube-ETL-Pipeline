@@ -52,7 +52,7 @@ services:
     container_name: etl_pipeline
     image: etl_pipeline:latest
     volumes:
-      - ./etl_pipeline:/opt/dagster/app
+      - ./etl_pipeline:/opt/dagster/app/etl_pipeline
     ports:
       - 4040:4040
     env_file: .env
@@ -127,11 +127,10 @@ services:
       
   # Spark
   spark-master:
-    # build:
-    #   context: ./docker-images/spark
-    #   dockerfile: Dockerfile
-    # image: spark-master:latest
-    image: docker.io/bitnami/spark:3.5.1
+    build:
+      context: ./docker-images/spark
+      dockerfile: Dockerfile
+    image: spark-master:latest
     container_name: spark-master
     volumes:
       - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf

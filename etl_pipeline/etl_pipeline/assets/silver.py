@@ -43,7 +43,7 @@ def silver_videoCategory_clean(context: AssetExecutionContext,
     return Output(
         value=polars_df,
         metadata={
-            "File Name": MetadataValue.text("silver_videoCategory_clean.pq"),
+            "File Name": MetadataValue.text("videoCategory_clean.pq"),
             "Number Columns": MetadataValue.int(polars_df.shape[1]),
             "Number Records": MetadataValue.int(polars_df.shape[0])
         }
@@ -74,30 +74,28 @@ def silver_linkVideos_clean(context: AssetExecutionContext,
         Clean 'linkVideos_trending_data' and load to silver layer in MinIO
     """
     spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
-    # pl_data: pl.DataFrame = context.resources.youtube_io_manager.get_DataFrame(context, "video_id")
+    pl_data: pl.DataFrame = context.resources.youtube_io_manager.get_DataFrame(context, "video_id")
     linkVideos: DataFrame = spark.createDataFrame(linkVideos_trending_data.to_pandas())
-    trending: DataFrame = spark.createDataFrame(bronze_youtube_trending_data.to_pandas())
+    trending: DataFrame = spark.createDataFrame(pl_data.to_pandas())
+    trending = trending.dropDuplicates(["video_id"])
     context.log.info(f"linkVideos: {linkVideos.count(), len(linkVideos.columns)}")
     context.log.info(f"trending: {trending.count(), len(trending.columns)}")
-    linkVideos.createOrReplaceTempView("linkVideos")
-    trending.createOrReplaceTempView("trending")
     context.log.info("Convert polars dataframe to pyspark dataframe")
     context.log.info("Convert pyspark dataframe to View in SQL query")
-    query = """ 
-                SELECT t.*
-                FROM linkVideos lv LEFT JOIN trending t
-                    on lv.videoId = t.video_id
-            """
-    spark_df = spark.sql(query)
-    spark_df = spark_df.toPandas()
-    spark_df = pl.DataFrame(spark_df)
+    spark_df = linkVideos.join(
+        trending, 
+        linkVideos["videoId"] == trending["video_id"], 
+        how="full",
+    ).select(trending.video_id, linkVideos.link_video)
+    context.log.info(f"spark_df: {spark_df.count(), len(spark_df.columns)}")
+    polars_df = pl.DataFrame(spark_df.toPandas())
     
     return Output(
-        value=spark_df,
+        value=polars_df,
         metadata={
-            "File Name": MetadataValue.text("silver_linkVideos_clean.pq"),
-            "Number Columns": MetadataValue.int(spark_df.shape[1]),
-            "Number Records": MetadataValue.int(spark_df.shape[0])
+            "File Name": MetadataValue.text("linkVideos_clean.pq"),
+            "Number Columns": MetadataValue.int(polars_df.shape[1]),
+            "Number Records": MetadataValue.int(polars_df.shape[0])
         }
     )
     
@@ -108,7 +106,6 @@ def silver_linkVideos_clean(context: AssetExecutionContext,
             key_prefix=["bronze", "youtube"]
         )
     },
-    # deps=["bronze_youtube_trending_data"],
     name="silver_trending_clean",
     required_resource_keys={"spark_io_manager"},
     io_manager_key="spark_io_manager",
@@ -146,7 +143,7 @@ def silver_trending_clean(context: AssetExecutionContext,
     # thumbnail_link replace from default to maxresdefault
     link_convert = udf(replace_str, StringType())
     spark_df = spark_df.withColumn("thumbnail_link", link_convert(spark_df["thumbnail_link"]))
-    context.log.info(f"Data: {spark_df.show(5)}")
+    # context.log.info(f"Data: {spark_df.show(5)}")
     polars_df = pl.DataFrame(spark_df.toPandas())
     
     return Output(
