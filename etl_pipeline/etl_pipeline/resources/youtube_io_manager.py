@@ -1,4 +1,5 @@
 import os
+import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Union, List
@@ -100,6 +101,7 @@ class YoutubeIOManager(IOManager):
             client.fget_object(bucket_name, key_name, tmp_file_path)
             df = pl.read_parquet(tmp_file_path)[field].unique()
             list_dfs.append(df)
+            time.sleep(1)
             
             context.log.info(f"INFO -> key_name: {key_name}, tmp_file_path: {tmp_file_path}")
             os.remove(tmp_file_path)
