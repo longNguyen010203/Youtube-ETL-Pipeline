@@ -48,8 +48,8 @@ class SparkIOManager(IOManager):
 
     
     def get_spark_session(self, context) -> SparkSession:
-        context.log.info("Return Object SparkSession")
         with create_spark_session(self._config) as spark:
+            context.log.info("Return Object SparkSession")
             return spark
         
         
