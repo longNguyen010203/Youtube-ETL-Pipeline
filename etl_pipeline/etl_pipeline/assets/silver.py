@@ -8,31 +8,88 @@ from dagster import Output, MetadataValue
 from dagster import AssetIn
 
 from ..partitions import monthly_partitions
-from .func_process import replace_str, format_date
+from ..func_process import replace_str, format_date
 
 
-GROUP_NAME = "bronze"
+GROUP_NAME = "silver"
+
+# @asset(
+#     ins={
+#         "bronze_CA_youtube_trending": AssetIn(key_prefix=["bronze", "youtube"]),
+#         "bronze_DE_youtube_trending": AssetIn(key_prefix=["bronze", "youtube"]),
+#         "bronze_IN_youtube_trending": AssetIn(key_prefix=["bronze", "youtube"]),
+#         "bronze_JP_youtube_trending": AssetIn(key_prefix=["bronze", "youtube"]),
+#         "bronze_RU_youtube_trending": AssetIn(key_prefix=["bronze", "youtube"])
+#     },
+#     name="bronze_youtube_trending",
+#     required_resource_keys={"youtube_io_manager"},
+#     io_manager_key="minio_io_manager",
+#     key_prefix=["bronze", "youtube"],
+#     compute_kind="Youtube API",
+#     group_name=GROUP_NAME
+# )
+# def bronze_youtube_trending(context: AssetExecutionContext,
+#                             bronze_CA_youtube_trending: pl.DataFrame,
+#                             bronze_DE_youtube_trending: pl.DataFrame,
+#                             bronze_IN_youtube_trending: pl.DataFrame,
+#                             bronze_JP_youtube_trending: pl.DataFrame,
+#                             bronze_RU_youtube_trending: pl.DataFrame
+#     ) -> Output[pl.DataFrame]:
+
+#     pl_data = pl.concat(
+#         [
+#             bronze_CA_youtube_trending,
+#             bronze_DE_youtube_trending,
+#             bronze_IN_youtube_trending,
+#             bronze_JP_youtube_trending,
+#             bronze_RU_youtube_trending
+#         ]
+#     )
+    
+#     try:
+#         partition_date_str = context.asset_partition_key_for_output()
+#         partition_by = "publishedAt"
+        
+#         query += f""" 
+#             WHERE SUBSTRING({partition_by}, 1, 4) = '{partition_date_str[:4]}' AND 
+#                   SUBSTRING({partition_by}, 6, 2) = '{partition_date_str[5:7]}'; """
+                        
+#         context.log.info(f"Partition by {partition_by} = {partition_date_str[:7]}")
+#         context.log.info(f"SQL query: {query}")
+#     except Exception as e:
+#         raise Exception(f"{e}")
+    
+#     return Output(
+#         value=pl_data,
+#         metadata={
+#             "File Name": MetadataValue.text("youtube_trending.pq"),
+#             "Number Columns": MetadataValue.int(pl_data.shape[1]),
+#             "Number Records": MetadataValue.int(pl_data.shape[0]),
+#         }
+#     )
+
 
 @asset(
     ins={
-        "videoCategory_trending_data": AssetIn(
+        "bronze_videoCategory_trending": AssetIn(
             key_prefix=["bronze", "youtube"]
         )
     },
-    name="silver_videoCategory_clean",
+    name="silver_videoCategory_cleaned",
     required_resource_keys={"spark_io_manager"},
     io_manager_key="spark_io_manager",
     key_prefix=["silver", "youtube"],
     compute_kind="PySpark",
     group_name=GROUP_NAME
 )
-def silver_videoCategory_clean(context: AssetExecutionContext,
-                               videoCategory_trending_data: pl.DataFrame) -> Output[pl.DataFrame]:
+def silver_videoCategory_cleaned(context: AssetExecutionContext,
+                                 bronze_videoCategory_trending: pl.DataFrame
+    ) -> Output[pl.DataFrame]:
     """ 
         Clean 'videoCategory_trending_data' and load to silver layer in MinIO
     """
     spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
-    spark_df: DataFrame = spark.createDataFrame(videoCategory_trending_data.to_pandas())
+    spark_df: DataFrame = spark.createDataFrame(bronze_videoCategory_trending.to_pandas())
     spark_df = spark_df.withColumn("categoryId", spark_df["categoryId"].cast(IntegerType()))
     spark_df = spark_df.orderBy(spark_df["categoryId"])
     polars_df = pl.DataFrame(spark_df.toPandas())
@@ -43,7 +100,7 @@ def silver_videoCategory_clean(context: AssetExecutionContext,
     return Output(
         value=polars_df,
         metadata={
-            "File Name": MetadataValue.text("videoCategory_clean.pq"),
+            "File Name": MetadataValue.text("videoCategory_cleaned.pq"),
             "Number Columns": MetadataValue.int(polars_df.shape[1]),
             "Number Records": MetadataValue.int(polars_df.shape[0])
         }
@@ -52,34 +109,33 @@ def silver_videoCategory_clean(context: AssetExecutionContext,
     
 @asset(
     ins={
-        "linkVideos_trending_data": AssetIn(
-            key_prefix=["bronze", "youtube"]
-        ),
-        "bronze_youtube_trending_data": AssetIn(
-            key_prefix=["bronze", "youtube"]
-        )
+        "bronze_linkVideos_trending": AssetIn(key_prefix=["bronze", "youtube"]),
+        "silver_youtube_trending_01": AssetIn(key_prefix=["silver", "youtube"]),
+        "silver_youtube_trending_02": AssetIn(key_prefix=["silver", "youtube"])
     },
-    # deps=["bronze_youtube_trending_data"],
-    name="silver_linkVideos_clean",
+    name="silver_linkVideos_cleaned",
     required_resource_keys={"spark_io_manager", "youtube_io_manager"},
     io_manager_key="spark_io_manager",
     key_prefix=["silver", "youtube"],
     compute_kind="PySpark",
     group_name=GROUP_NAME
 )
-def silver_linkVideos_clean(context: AssetExecutionContext,
-                            linkVideos_trending_data: pl.DataFrame,
-                            bronze_youtube_trending_data: pl.DataFrame) -> Output[pl.DataFrame]:
+def silver_linkVideos_cleaned(context: AssetExecutionContext,
+                            bronze_linkVideos_trending: pl.DataFrame,
+                            silver_youtube_trending_01: pl.DataFrame,
+                            silver_youtube_trending_02: pl.DataFrame
+    ) -> Output[pl.DataFrame]:
     """ 
         Clean 'linkVideos_trending_data' and load to silver layer in MinIO
     """
     spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
-    pl_data: pl.DataFrame = context.resources.youtube_io_manager.get_DataFrame(context, "video_id")
-    linkVideos: DataFrame = spark.createDataFrame(linkVideos_trending_data.to_pandas())
-    trending: DataFrame = spark.createDataFrame(pl_data.to_pandas())
+    linkVideos: DataFrame = spark.createDataFrame(bronze_linkVideos_trending.to_pandas())
+    trending_01: DataFrame = spark.createDataFrame(silver_youtube_trending_01.to_pandas())
+    trending_02: DataFrame = spark.createDataFrame(silver_youtube_trending_02.to_pandas())
+    trending = pl.concat([trending_01, trending_02])
     trending = trending.dropDuplicates(["video_id"])
-    context.log.info(f"linkVideos: {linkVideos.count(), len(linkVideos.columns)}")
-    context.log.info(f"trending: {trending.count(), len(trending.columns)}")
+    # context.log.info(f"linkVideos: {linkVideos.count(), len(linkVideos.columns)}")
+    # context.log.info(f"trending: {trending.count(), len(trending.columns)}")
     context.log.info("Convert polars dataframe to pyspark dataframe")
     context.log.info("Convert pyspark dataframe to View in SQL query")
     spark_df = linkVideos.join(
@@ -87,13 +143,13 @@ def silver_linkVideos_clean(context: AssetExecutionContext,
         linkVideos["videoId"] == trending["video_id"], 
         how="full",
     ).select(trending.video_id, linkVideos.link_video)
-    context.log.info(f"spark_df: {spark_df.count(), len(spark_df.columns)}")
+    # context.log.info(f"spark_df: {spark_df.count(), len(spark_df.columns)}")
     polars_df = pl.DataFrame(spark_df.toPandas())
     
     return Output(
         value=polars_df,
         metadata={
-            "File Name": MetadataValue.text("linkVideos_clean.pq"),
+            "File Name": MetadataValue.text("linkVideos_cleaned.pq"),
             "Number Columns": MetadataValue.int(polars_df.shape[1]),
             "Number Records": MetadataValue.int(polars_df.shape[0])
         }
@@ -102,9 +158,8 @@ def silver_linkVideos_clean(context: AssetExecutionContext,
     
 @asset(
     ins={
-        "bronze_youtube_trending_data": AssetIn(
-            key_prefix=["bronze", "youtube"]
-        )
+        "silver_youtube_trending_01": AssetIn(key_prefix=["silver", "youtube"]),
+        "silver_youtube_trending_02": AssetIn(key_prefix=["silver", "youtube"])
     },
     name="silver_trending_clean",
     required_resource_keys={"spark_io_manager"},
@@ -115,12 +170,15 @@ def silver_linkVideos_clean(context: AssetExecutionContext,
     group_name=GROUP_NAME
 )
 def silver_trending_clean(context: AssetExecutionContext,
-                          bronze_youtube_trending_data: pl.DataFrame) -> Output[pl.DataFrame]:
+                          silver_youtube_trending_01: pl.DataFrame,
+                          silver_youtube_trending_02: pl.DataFrame
+    ) -> Output[pl.DataFrame]:
     """ 
         Clean 'bronze_youtube_trending_data' and load to silver layer in MinIO
     """
     spark: SparkSession = context.resources.spark_io_manager.get_spark_session(context)
-    spark_df: DataFrame = spark.createDataFrame(bronze_youtube_trending_data.to_pandas())
+    trending = pl.concat([silver_youtube_trending_01, silver_youtube_trending_02])
+    spark_df: DataFrame = spark.createDataFrame(trending.to_pandas())
     # publishedAt replace to format date
     date_format = udf(format_date, StringType())
     spark_df = spark_df.withColumn("publishedAt", date_format(spark_df["publishedAt"]))
@@ -154,4 +212,3 @@ def silver_trending_clean(context: AssetExecutionContext,
             "Columns": MetadataValue.int(polars_df.shape[1])
         }
     )
-    
