@@ -101,7 +101,7 @@ class YoutubeIOManager(IOManager):
             client.fget_object(bucket_name, key_name, tmp_file_path)
             df = pl.read_parquet(tmp_file_path)[field].unique()
             list_dfs.append(df)
-            time.sleep(1)
+            time.sleep(0.5)
             
             context.log.info(f"INFO -> key_name: {key_name}, tmp_file_path: {tmp_file_path}")
             os.remove(tmp_file_path)
@@ -110,9 +110,10 @@ class YoutubeIOManager(IOManager):
         return pl_data
         
         
-    def downLoad_videoCategories(self, context) -> pl.DataFrame:  
+    def downLoad_videoCategories(self, context, obj: pl.DataFrame) -> pl.DataFrame:  
         
-        pl_data = self.get_DataFrame(context, "categoryId")
+        # pl_data = self.get_DataFrame(context, "categoryId")
+        pl_data = obj["categoryId"].unique()
         
         with youtube_client(self._config) as service:
             categoryNames: list[str] = []
@@ -143,9 +144,9 @@ class YoutubeIOManager(IOManager):
         )
 
     
-    def downLoad_linkVideos(self, context) -> pl.DataFrame:
+    def downLoad_linkVideos(self, context, obj: pl.DataFrame) -> pl.DataFrame:
             
-        pl_data = self.get_DataFrame(context, "video_id")
+        pl_data = obj["video_id"].unique()
             
         with youtube_client(self._config) as service:
             link_videos: list[str] = []
