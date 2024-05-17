@@ -1,5 +1,5 @@
-DROP SCHEMA IF EXISTS youtube CASCADE;
-CREATE SCHEMA youtube;
+DROP SCHEMA IF EXISTS gold CASCADE;
+CREATE SCHEMA gold;
 
 CREATE TABLE gold.videoCategory (
     categoryId VARCHAR(5),
