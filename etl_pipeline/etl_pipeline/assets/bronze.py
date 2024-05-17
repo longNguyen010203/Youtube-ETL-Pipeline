@@ -14,7 +14,7 @@ GROUP_NAME = "bronze"
     required_resource_keys={"mysql_io_manager"},
     io_manager_key="minio_io_manager",
     key_prefix=["bronze", "youtube"],
-    compute_kind="MySQL",
+    compute_kind="SQL",
     group_name=GROUP_NAME
 )
 def bronze_CA_youtube_trending(context: AssetExecutionContext) -> Output[pl.DataFrame]:
@@ -23,19 +23,6 @@ def bronze_CA_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
         from MySQL database as polars DataFrame and save to MinIO
     """
     query = """ SELECT * FROM CA_youtube_trending_data; """
-    
-    # try:
-    #     partition_date_str = context.asset_partition_key_for_output()
-    #     partition_by = "publishedAt"
-        
-    #     query += f""" 
-    #         WHERE SUBSTRING({partition_by}, 1, 4) = '{partition_date_str[:4]}' AND 
-    #               SUBSTRING({partition_by}, 6, 2) = '{partition_date_str[5:7]}'; """
-                        
-    #     context.log.info(f"Partition by {partition_by} = {partition_date_str[:7]}")
-    #     context.log.info(f"SQL query: {query}")
-    # except Exception as e:
-    #     context.log.info(f"olist_orders_dataset has no partition key!")
     
     pl_data: pl.DataFrame = context.resources.mysql_io_manager.extract_data(query)
     context.log.info(f"Extract table 'CA_youtube_trending_data' from MySQL Success")
@@ -55,7 +42,7 @@ def bronze_CA_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
     required_resource_keys={"mysql_io_manager"},
     io_manager_key="minio_io_manager",
     key_prefix=["bronze", "youtube"],
-    compute_kind="MySQL",
+    compute_kind="SQL",
     group_name=GROUP_NAME
 )
 def bronze_DE_youtube_trending(context: AssetExecutionContext) -> Output[pl.DataFrame]:
@@ -83,7 +70,7 @@ def bronze_DE_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
     required_resource_keys={"mysql_io_manager"},
     io_manager_key="minio_io_manager",
     key_prefix=["bronze", "youtube"],
-    compute_kind="MySQL",
+    compute_kind="SQL",
     group_name=GROUP_NAME
 )
 def bronze_IN_youtube_trending(context: AssetExecutionContext) -> Output[pl.DataFrame]:
@@ -111,7 +98,7 @@ def bronze_IN_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
     required_resource_keys={"mysql_io_manager"},
     io_manager_key="minio_io_manager",
     key_prefix=["bronze", "youtube"],
-    compute_kind="MySQL",
+    compute_kind="SQL",
     group_name=GROUP_NAME
 )
 def bronze_JP_youtube_trending(context: AssetExecutionContext) -> Output[pl.DataFrame]:
@@ -139,7 +126,7 @@ def bronze_JP_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
     required_resource_keys={"mysql_io_manager"},
     io_manager_key="minio_io_manager",
     key_prefix=["bronze", "youtube"],
-    compute_kind="MySQL",
+    compute_kind="SQL",
     group_name=GROUP_NAME
 )
 def bronze_RU_youtube_trending(context: AssetExecutionContext) -> Output[pl.DataFrame]:
@@ -172,7 +159,7 @@ def bronze_RU_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
         "silver_youtube_trending_01": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name="silver"
+            group_name=GROUP_NAME  # "silver"
         ),
         "bronze_linkVideos_trending": AssetOut(
             io_manager_key="minio_io_manager",
@@ -198,6 +185,9 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
             bronze_IN_youtube_trending
         ]
     )
+    # 2020-08-11T16:34:06Z
+    data = data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
+    
     pl_data: pl.DataFrame = context \
             .resources \
             .youtube_io_manager \
@@ -234,7 +224,7 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
         "silver_youtube_trending_02": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name="silver"
+            group_name=GROUP_NAME  # "silver"
         ),
         "bronze_videoCategory_trending": AssetOut(
             io_manager_key="minio_io_manager",
@@ -259,6 +249,9 @@ def bronze_videoCategory_trending(context: AssetExecutionContext,
             bronze_RU_youtube_trending
         ]
     )
+    # 2020-08-11T16:34:06Z
+    data = data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
+    
     pl_data: pl.DataFrame = context \
             .resources \
             .youtube_io_manager \
