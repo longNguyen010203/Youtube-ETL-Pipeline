@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS youtube_trending_data;
 DROP TABLE IF EXISTS CA_youtube_trending_data;
 CREATE TABLE CA_youtube_trending_data (
     video_id VARCHAR(20),
+    country_code VARCHAR(2) DEFAULT 'CA',
     title TEXT,
     publishedAt VARCHAR(27),
     channelId VARCHAR(27),
@@ -24,6 +25,7 @@ CREATE TABLE CA_youtube_trending_data (
 DROP TABLE IF EXISTS DE_youtube_trending_data;
 CREATE TABLE DE_youtube_trending_data (
     video_id VARCHAR(20),
+    country_code VARCHAR(2) DEFAULT 'DE',
     title TEXT,
     publishedAt VARCHAR(27),
     channelId VARCHAR(27),
@@ -44,6 +46,7 @@ CREATE TABLE DE_youtube_trending_data (
 DROP TABLE IF EXISTS IN_youtube_trending_data;
 CREATE TABLE IN_youtube_trending_data (
     video_id VARCHAR(20),
+    country_code VARCHAR(2) DEFAULT 'IN',
     title TEXT,
     publishedAt VARCHAR(27),
     channelId VARCHAR(27),
@@ -64,6 +67,7 @@ CREATE TABLE IN_youtube_trending_data (
 DROP TABLE IF EXISTS JP_youtube_trending_data;
 CREATE TABLE JP_youtube_trending_data (
     video_id VARCHAR(20),
+    country_code VARCHAR(2) DEFAULT 'JP',
     title TEXT,
     publishedAt VARCHAR(27),
     channelId VARCHAR(27),
@@ -84,6 +88,7 @@ CREATE TABLE JP_youtube_trending_data (
 DROP TABLE IF EXISTS RU_youtube_trending_data;
 CREATE TABLE RU_youtube_trending_data (
     video_id VARCHAR(20),
+    country_code VARCHAR(2) DEFAULT 'RU',
     title TEXT,
     publishedAt VARCHAR(27),
     channelId VARCHAR(27),
