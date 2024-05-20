@@ -37,7 +37,7 @@ GROUP_NAME = "gold"
     },
     name="gold_videoCategory",
     required_resource_keys={"spark_io_manager"},
-    compute_kind="PySpark",
+    compute_kind="polars",
 )
 def gold_videoCategory(context: AssetExecutionContext,
                        silver_videoCategory_cleaned: pl.DataFrame
@@ -84,7 +84,7 @@ def gold_videoCategory(context: AssetExecutionContext,
     },
     name="gold_linkVideos",
     required_resource_keys={"spark_io_manager"},
-    compute_kind="PySpark"
+    compute_kind="polars"
 )
 def gold_linkVideos(context: AssetExecutionContext,
                     silver_linkVideos_cleaned: pl.DataFrame

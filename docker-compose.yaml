@@ -51,8 +51,10 @@ services:
       dockerfile: Dockerfile
     container_name: etl_pipeline
     image: etl_pipeline:latest
+    restart: always
     volumes:
       - ./etl_pipeline:/opt/dagster/app/etl_pipeline
+      - ./docker-images/spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf
     ports:
       - 4040:4040
     env_file: .env
@@ -132,6 +134,7 @@ services:
       dockerfile: Dockerfile
     image: spark-master:latest
     container_name: spark-master
+    hostname: spark_master
     volumes:
       - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./data:/opt/spark-data
@@ -152,6 +155,7 @@ services:
       replicas: 3
     env_file: .env.spark_worker
     volumes:
+      - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./data:/opt/spark-data
     networks:
       - de_network

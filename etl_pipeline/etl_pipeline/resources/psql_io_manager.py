@@ -43,8 +43,20 @@ class PostgreSQLIOManager(IOManager):
             with db_conn.cursor() as cursor:
                 # create temp table
                 cursor.execute(
-                    f"CREATE TEMP TABLE IF NOT EXISTS {tmp_tbl} (LIKE {schema}.{table})"
+                    f'CREATE TEMP TABLE IF NOT EXISTS "{tmp_tbl}" (LIKE {schema}.{table})'
                 )
+                cursor.execute(f'SELECT COUNT(*) FROM "{tmp_tbl}"')
+                context.log.debug(
+                    f"Log for creating temp table: {cursor.fetchall()}"
+                )
+                # cursor.execute(
+                #     sql.SQL("CREATE TEMP TABLE IF NOT EXISTS {} (LIKE {}.{});").format(
+                #         sql.Identifier(tmp_tbl),
+                #         sql.Identifier(schema),
+                #         sql.Identifier(table),
+                #     )
+                # )
+                
                 # insert new data
                 try:
                     columns = sql.SQL(",").join(
@@ -54,7 +66,7 @@ class PostgreSQLIOManager(IOManager):
                     values = sql.SQL(",").join(sql.Placeholder() for _ in obj.columns)
                     
                     context.log.debug("Inserting data into temp table")
-                    insert_query = sql.SQL("INSERT INTO {} ({}) VALUES({});").format(
+                    insert_query = sql.SQL('INSERT INTO {} ({}) VALUES({});').format(
                         sql.Identifier(tmp_tbl), columns, values
                     )
                     psycopg2.extras.execute_batch(cursor, insert_query, obj.rows())
@@ -67,25 +79,25 @@ class PostgreSQLIOManager(IOManager):
                 
             with db_conn.cursor() as cursor:
                 # check data inserted
-                cursor.execute(f"SELECT COUNT(*) FROM {tmp_tbl}")
+                cursor.execute(f'SELECT COUNT(*) FROM "{tmp_tbl}"')
                 context.log.info(f"Number of rows inserted: {cursor.fetchone()}")
                     
                 # upsert data
                 if len(primary_keys) > 0:
                     conditions = " AND ".join(
                         [
-                            f""" {schema}.{table}."{k}" = {tmp_tbl}."{k}" """
+                            f""" {schema}.{table}."{k.lower()}" = "{tmp_tbl}"."{k.lower()}" """
                             for k in primary_keys
                         ]
                     )
                     command = f"""
                         BEGIN TRANSACTION;
                         DELETE FROM {schema}.{table}
-                        USING {tmp_tbl}
+                        USING "{tmp_tbl}"
                         WHERE {conditions};
                         
                         INSERT INTO {schema}.{table}
-                        SELECT * FROM {tmp_tbl};
+                        SELECT * FROM "{tmp_tbl}";
                         
                         END TRANSACTION;
                     """
@@ -95,12 +107,12 @@ class PostgreSQLIOManager(IOManager):
                         TRUNCATE TABLE {schema}.{table};
 
                         INSERT INTO {schema}.{table}
-                        SELECT * FROM {tmp_tbl};
+                        SELECT * FROM "{tmp_tbl}";
                         
                         END TRANSACTION;
                     """
 
                 cursor.execute(command)
                 # drop temp table
-                cursor.execute(f"DROP TABLE IF EXISTS {tmp_tbl}")
+                cursor.execute(f'DROP TABLE IF EXISTS "{tmp_tbl}"')
                 db_conn.commit()

@@ -1,7 +1,6 @@
 import pandas as pd
 
-path = "/home/longnguyen/Documents/Coding/FDE-Course-2024/Project-Day/Youtube-ETL-Pipeline/linkVideos_trending_data.pq"
-df = pd.read_parquet(path)
 
-print(df.shape)
-print(df)
+df = pd.read_parquet("202010.pq")
+print()
+print(df[["categoryId", "view_count", "likes", "dislikes","comment_count"]].head(10))

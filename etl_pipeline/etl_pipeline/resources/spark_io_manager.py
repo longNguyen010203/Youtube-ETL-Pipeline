@@ -4,37 +4,38 @@ from dagster import IOManager, InputContext, OutputContext
 
 import os
 import polars as pl
+import pandas as pd
 from contextlib import contextmanager
 from pyspark.sql import SparkSession, DataFrame
 from .minio_io_manager import connect_minio
 
 
 @contextmanager
-def create_spark_session(config, appName="Spark IO Manager"):
-    # spark = (
-    #     SparkSession.builder
-    #         .appName(appName)
-    #         .master(config["spark_master_url"])
-    #         .config("spark.driver.memory", "3g")
-    #         .config("spark.executor.memory", "3g")
-    #         .config("spark.hadoop.fs.s3a.endpoint", "http://" + config["endpoint_url"])
-    #         .config("spark.hadoop.fs.s3a.access.key", str(config["aws_access_key_id"]))
-    #         .config("spark.hadoop.fs.s3a.secret.key", str(config["aws_secret_access_key"]))
-    #         .config("spark.hadoop.fs.s3a.path.style.access", "true")
-    #         .config("spark.hadoop.fs.connection.ssl.enabled", "false")
-    #         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-    #         .getOrCreate()
-    # )
-    
-    spark = (SparkSession.builder.appName(appName) 
-                    .master(config["spark_master_url"]) 
-                    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") 
-                    .config("spark.hadoop.fs.s3a.endpoint", "http://" + config["endpoint_url"]) 
-                    .config("spark.hadoop.fs.s3a.access.key", str(config["aws_access_key_id"])) 
-                    .config("spark.hadoop.fs.s3a.secret.key", str(config["aws_secret_access_key"])) 
-                    .getOrCreate()
+def create_spark_session(config, appName=None):
+    spark = (
+        SparkSession.builder.appName(appName)
+            .master("spark://spark-master:7077")
+            .config("spark.driver.memory", "4g")
+            .config("spark.executor.memory", "4g")
+            # .config("spark.cores.max", "4")
+            # .config("spark.executor.cores", "4")
+            .config(
+                "spark.jars",
+                "/usr/local/spark/jars/delta-core_2.12-2.2.0.jar,/usr/local/spark/jars/hadoop-aws-3.3.2.jar,/usr/local/spark/jars/delta-storage-2.2.0.jar,/usr/local/spark/jars/aws-java-sdk-1.12.367.jar,/usr/local/spark/jars/s3-2.18.41.jar,/usr/local/spark/jars/aws-java-sdk-bundle-1.11.1026.jar",
+            )
+            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+            .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+            .config("spark.hadoop.fs.s3a.endpoint", "http://" + config["endpoint_url"])
+            .config("spark.hadoop.fs.s3a.access.key", str(config["aws_access_key_id"]))
+            .config("spark.hadoop.fs.s3a.secret.key", str(config["aws_secret_access_key"]))
+            .config("spark.hadoop.fs.s3a.path.style.access", "true")
+            .config("spark.hadoop.fs.connection.ssl.enabled", "false")
+            .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+            .config("spark.sql.execution.arrow.pyspark.enabled", "true")
+            .config("spark.sql.execution.arrow.pyspark.fallback.enabled", "true")
+            .getOrCreate()
     )
-                                
+
     try:
         yield spark
     except Exception as e:
@@ -47,8 +48,8 @@ class SparkIOManager(IOManager):
         self._config = config
 
     
-    def get_spark_session(self, context) -> SparkSession:
-        with create_spark_session(self._config) as spark:
+    def get_spark_session(self, context, appName) -> SparkSession:
+        with create_spark_session(self._config, appName) as spark:
             context.log.info("Return Object SparkSession")
             return spark
         
@@ -61,7 +62,7 @@ class SparkIOManager(IOManager):
             "-".join(context.asset_key.path)
         )
         return key, tmp_file_path
-        
+    
     
     def handle_output(self, context: OutputContext, obj: pl.DataFrame):
         key_name, tmp_file_path = self._get_path(context)

@@ -1,10 +1,15 @@
 import polars as pl
-
-from dagster import asset, AssetExecutionContext
-from dagster import Output, MetadataValue
-from dagster import AssetIn, AssetOut, multi_asset
-
 from ..partitions import monthly_partitions
+
+from dagster import (
+    asset,
+    Output,
+    AssetIn,
+    AssetOut,
+    multi_asset,
+    MetadataValue,
+    AssetExecutionContext
+)
 
 
 GROUP_NAME = "bronze"
@@ -159,7 +164,7 @@ def bronze_RU_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
         "silver_youtube_trending_01": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name=GROUP_NAME  # "silver"
+            group_name=GROUP_NAME  #"silver"
         ),
         "bronze_linkVideos_trending": AssetOut(
             io_manager_key="minio_io_manager",
@@ -187,6 +192,7 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
     )
     # 2020-08-11T16:34:06Z
     data = data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
+    data = data.with_columns(pl.col("publishedAt").str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S"))
     
     pl_data: pl.DataFrame = context \
             .resources \
@@ -224,7 +230,7 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
         "silver_youtube_trending_02": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name=GROUP_NAME  # "silver"
+            group_name=GROUP_NAME   #"silver"
         ),
         "bronze_videoCategory_trending": AssetOut(
             io_manager_key="minio_io_manager",
@@ -251,6 +257,7 @@ def bronze_videoCategory_trending(context: AssetExecutionContext,
     )
     # 2020-08-11T16:34:06Z
     data = data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
+    data = data.with_columns(pl.col("publishedAt").str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S"))
     
     pl_data: pl.DataFrame = context \
             .resources \
