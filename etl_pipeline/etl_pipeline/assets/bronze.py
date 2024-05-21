@@ -164,7 +164,7 @@ def bronze_RU_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
         "silver_youtube_trending_01": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name=GROUP_NAME  #"silver"
+            group_name=GROUP_NAME#"silver"
         ),
         "bronze_linkVideos_trending": AssetOut(
             io_manager_key="minio_io_manager",
@@ -190,6 +190,7 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
             bronze_IN_youtube_trending
         ]
     )
+    # data = data.filter((pl.col("publishedAt") != "") | (pl.col("publishedAt") != "35"))
     # 2020-08-11T16:34:06Z
     data = data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
     data = data.with_columns(pl.col("publishedAt").str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S"))
@@ -230,7 +231,7 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
         "silver_youtube_trending_02": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name=GROUP_NAME   #"silver"
+            group_name=GROUP_NAME#"silver"
         ),
         "bronze_videoCategory_trending": AssetOut(
             io_manager_key="minio_io_manager",
