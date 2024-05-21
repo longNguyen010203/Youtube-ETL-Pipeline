@@ -1,4 +1,5 @@
 import polars as pl
+from ..partitions import monthly_partitions
 
 from dagster import (
     multi_asset,
@@ -42,7 +43,7 @@ def videoCategory(context: AssetExecutionContext,
                        gold_videoCategory: pl.DataFrame
 ) -> Output[pl.DataFrame]:
     """ 
-        Compute and Load videoCategory data from silver to gold layer in MinIO
+        Load videoCategory data from gold to PostgreSQL warehouse
     """
     pl_data: pl.DataFrame = gold_videoCategory
     context.log.info(f"Load videoCategory data Success with shape {pl_data.shape}")
@@ -50,7 +51,7 @@ def videoCategory(context: AssetExecutionContext,
     return Output(
         value=pl_data,
         metadata={
-            "file name": MetadataValue.text("videoCategory.pq"),
+            "table name": MetadataValue.text("videoCategory"),
             "record count": MetadataValue.int(pl_data.shape[0]),
             "column count": MetadataValue.int(pl_data.shape[1]),
             "columns": pl_data.columns
@@ -88,7 +89,7 @@ def linkVideos(context: AssetExecutionContext,
                     gold_linkVideos: pl.DataFrame
 ) -> Output[pl.DataFrame]:
     """ 
-        Compute and Load linkVideos data from silver to gold layer in MinIO
+        Load linkVideos data from gold to PostgreSQL warehouse
     """
     pl_data: pl.DataFrame = gold_linkVideos
     context.log.info(f"Load linkVideos data Success with shape {pl_data.shape}")
@@ -96,7 +97,118 @@ def linkVideos(context: AssetExecutionContext,
     return Output(
         value=pl_data,
         metadata={
-            "file name": MetadataValue.text("linkVideos.pq"),
+            "table name": MetadataValue.text("linkVideos"),
+            "record count": MetadataValue.int(pl_data.shape[0]),
+            "column count": MetadataValue.int(pl_data.shape[1]),
+            "columns": pl_data.columns
+        }
+    )
+    
+    
+@multi_asset(
+    ins={
+        "gold_metric_trending": AssetIn(
+            key_prefix=["gold", "youtube"]
+        )
+    },
+    outs={
+        "metricVideos": AssetOut(
+            key_prefix=["warehouse", "gold"],
+            io_manager_key="psql_io_manager",
+            metadata={
+                "primary_keys": [
+                    "video_id"
+                ],
+                "columns": [
+                    "video_id",
+                    # "country_code",
+                    "publishedAt",
+                    "trending_date",
+                    "channelId",
+                    "categoryId",
+                    "view_count",
+                    "likes",
+                    "dislikes",
+                    "comment_count"
+                ]
+            },
+            group_name=GROUP_NAME
+        )
+    },
+    name="metricVideos",
+    required_resource_keys={"psql_io_manager"},
+    partitions_def=monthly_partitions,
+    compute_kind="postgres"
+)
+def metricVideos(context: AssetExecutionContext,
+                 gold_metric_trending: pl.DataFrame
+) -> Output[pl.DataFrame]:
+    """ 
+        Load metricVideos data from gold to PostgreSQL warehouse
+    """
+    pl_data: pl.DataFrame = gold_metric_trending
+    context.log.info(f"Load metricVideos data Success with shape {pl_data.shape}")
+    
+    return Output(
+        value=pl_data,
+        metadata={
+            "table name": MetadataValue.text("metricVideos"),
+            "record count": MetadataValue.int(pl_data.shape[0]),
+            "column count": MetadataValue.int(pl_data.shape[1]),
+            "columns": pl_data.columns
+        }
+    )
+    
+    
+@multi_asset(
+    ins={
+        "gold_information_trending": AssetIn(
+            key_prefix=["gold", "youtube"]
+        )
+    },
+    outs={
+        "informationVideos": AssetOut(
+            key_prefix=["warehouse", "gold"],
+            io_manager_key="psql_io_manager",
+            metadata={
+                "primary_keys": [
+                    "video_id"
+                ],
+                "columns": [
+                    "video_id",
+                    # "country_code",
+                    "title",
+                    "channelId",
+                    "channelTitle",
+                    "categoryId",
+                    "tags",
+                    "thumbnail_link",
+                    "comments_disabled",
+                    "ratings_disabled",
+                    # "description"
+                ]
+            },
+            group_name=GROUP_NAME
+        )
+    },
+    name="informationVideos",
+    required_resource_keys={"psql_io_manager"},
+    partitions_def=monthly_partitions,
+    compute_kind="postgres"
+)
+def informationVideos(context: AssetExecutionContext,
+                 gold_information_trending: pl.DataFrame
+) -> Output[pl.DataFrame]:
+    """ 
+        Load informationVideos data from gold to PostgreSQL warehouse
+    """
+    pl_data: pl.DataFrame = gold_information_trending
+    context.log.info(f"Load informationVideos data Success with shape {pl_data.shape}")
+    
+    return Output(
+        value=pl_data,
+        metadata={
+            "table name": MetadataValue.text("informationVideos"),
             "record count": MetadataValue.int(pl_data.shape[0]),
             "column count": MetadataValue.int(pl_data.shape[1]),
             "columns": pl_data.columns
