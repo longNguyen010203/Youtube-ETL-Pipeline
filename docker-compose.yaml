@@ -114,6 +114,20 @@ services:
     networks:
       - de_network
 
+  de_streamlit:
+    build:
+      context: ./docker-images/streamlit
+      dockerfile: Dockerfile
+    image: de_streamlit:latest
+    container_name: de_streamlit
+    volumes:
+      - ./app:/app
+    env_file: .env
+    ports:
+      - "8501:8501"
+    networks:
+      - de_network
+
   # Jupyter
   # de_notebook:
   #   image: jupyter/all-spark-notebook:python-3.9
@@ -128,37 +142,37 @@ services:
   #     - de_network
       
   # Spark
-  spark-master:
-    build:
-      context: ./docker-images/spark
-      dockerfile: Dockerfile
-    image: spark-master:latest
-    container_name: spark-master
-    hostname: spark_master
-    volumes:
-      - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
-      - ./data:/opt/spark-data
-    env_file: .env.spark_master
-    expose:
-      - "7077"
-    ports:
-      - "7077:7077"
-      - "8080:8080"
-    networks:
-      - de_network
+  # spark-master:
+  #   build:
+  #     context: ./docker-images/spark
+  #     dockerfile: Dockerfile
+  #   image: spark-master:latest
+  #   container_name: spark-master
+  #   hostname: spark_master
+  #   volumes:
+  #     - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+  #     - ./data:/opt/spark-data
+  #   env_file: .env.spark_master
+  #   expose:
+  #     - "7077"
+  #   ports:
+  #     - "7077:7077"
+  #     - "8080:8080"
+  #   networks:
+  #     - de_network
 
-  spark-worker:
-    image: docker.io/bitnami/spark:3.5.1
-    depends_on: 
-      - spark-master
-    deploy: 
-      replicas: 3
-    env_file: .env.spark_worker
-    volumes:
-      - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
-      - ./data:/opt/spark-data
-    networks:
-      - de_network
+  # spark-worker:
+  #   image: docker.io/bitnami/spark:3.5.1
+  #   depends_on: 
+  #     - spark-master
+  #   deploy: 
+  #     replicas: 3
+  #   env_file: .env.spark_worker
+  #   volumes:
+  #     - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+  #     - ./data:/opt/spark-data
+  #   networks:
+  #     - de_network
 
 networks:
   de_network:
