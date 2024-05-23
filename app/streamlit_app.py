@@ -3,6 +3,8 @@ import psycopg2
 import polars as pl
 import pandas as pd
 from PIL import Image
+from io import BytesIO
+import requests
 
 
 icon = Image.open("./icons/youtube_v2.png", mode="r")
@@ -42,17 +44,23 @@ st.write(f"You entered: {video_name}")
 data = run_query(
     f"""
         SELECT DISTINCT 
-            i.video_id
-            , i.title
-            , i.channeltitle
-            , i.thumbnail_link
-            , l.link_video
-            , v.categoryname 
+            i.video_id,
+            i.title, 
+            i.channeltitle,
+            i.thumbnail_link,
+            l.link_video,
+            v.categoryname,
+            m.view_count 
         FROM gold.informationvideos i 
             INNER JOIN gold.linkvideos l 
                 ON i.video_id  = l.video_id
             INNER JOIN gold.videocategory v 
                 ON i.categoryid = v.categoryid 
+            INNER JOIN (
+                SELECT video_id, max(view_count) AS view_count 
+                FROM gold.metricvideos
+                GROUP BY video_id) AS m
+                ON i.video_id = m.video_id
         WHERE i.title LIKE '%{video_name}%'
         LIMIT 10;
     """
@@ -64,7 +72,8 @@ videos = {
     "channeltitle": [e[2] for e in data],
     "thumbnail_link": [e[3] for e in data],
     "link_video": [e[4] for e in data],
-    "categoryname": [e[5] for e in data]
+    "categoryname": [e[5] for e in data],
+    "view_count": [e[6] for e in data]
 }
 
 video_url = [
@@ -99,26 +108,31 @@ def display_video(url):
 # display_video(video_url)
 # st.write("")
 
-    
 st.subheader("Recommended Videos:")
-for video_id,title,channeltitle,thumbnail_link,link_video,categoryname in zip(
+for video_id,title,channeltitle,thumbnail_link,link_video,categoryname,view_count in zip(
     videos['video_id'],videos['title'],videos['channeltitle'],
-    videos['thumbnail_link'],videos['link_video'],videos['categoryname']):
+    videos['thumbnail_link'],videos['link_video'],videos['categoryname'],videos['view_count']):
     
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        display_video(link_video)
+        # display_video(link_video)
+        img = Image.open(BytesIO(requests.get(thumbnail_link).content))
+        st.image(img)
     
     with col2:
-        # st.markdown(f"### ")
-        st.write(f"**Name:**")
-        # st.write(f"**👍 Likes:** ")
-        # st.write(f"**👎 Dislikes:** ")
-        st.write(f"**🏷️ Category:**")
-        st.write(f"**👁️ Views:** ")
+        st.markdown(f"""
+            <div style="line-height: 1.5;">
+                <span style="font-weight: bold;">{title}</span><br>
+                <span style="opacity: 0.6;">channel: {channeltitle}</span><br>
+                <span style="opacity: 0.6;">category: {categoryname}</span><br>
+                <span style="opacity: 0.6;">views: {view_count}</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.write("---")
     
-    st.write("---")  # Đường phân cách giữa các video
+
 
 
 df = pl.DataFrame(data)
