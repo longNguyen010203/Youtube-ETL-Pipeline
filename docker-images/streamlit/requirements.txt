@@ -2,3 +2,5 @@ streamlit==1.34.0
 psycopg2-binary==2.9.9
 pandas==2.2.2
 polars==0.20.23
+# scikit-learn==1.5.0
+# surprise==0.1
