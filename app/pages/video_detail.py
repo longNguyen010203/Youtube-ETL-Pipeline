@@ -1,6 +1,9 @@
 from PIL import Image
 import streamlit as st
 import psycopg2
+from PIL import Image
+from io import BytesIO
+import requests
 
 
 icon = Image.open("./icons/youtube_v2.png", mode="r")
@@ -22,7 +25,7 @@ with logo:
 def display_video(url, recommended_videos=[]):
     if url not in recommended_videos:
         st.markdown(
-            f'''<iframe width="705" height="460" src="{url}" title="YouTube video player" frameborder="0" 
+            f'''<iframe width="705" height="460" src="https://{url}" title="YouTube video player" frameborder="0" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; 
                 web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>''', 
             unsafe_allow_html=True
@@ -60,6 +63,7 @@ data = run_query(f"""
                 , m.dislike
                 , m.publishedat
                 , l.link_video
+                , i.tags
             from gold.informationvideos i 
                 inner join gold.linkvideos l on i.video_id = l.video_id 
                 inner join gold.videocategory v on i.categoryid = v.categoryid 
@@ -84,7 +88,8 @@ videos = {
     "like": data[0][4],
     "dislike": data[0][5],
     "publishedat": data[0][6],
-    "link_video": data[0][7]
+    "link_video": data[0][7],
+    "tags": data[0][8]
 }
 
 display_video(videos['link_video'])
@@ -94,6 +99,8 @@ like_icon = Image.open("./icons/icons8-like-48.png", mode="r")
 dislike_icon = Image.open("./icons/icons8-thumbs-down-skin-type-4-48.png", mode="r")
 category_icon = Image.open("./icons/icons8-category-48.png", mode="r")
 channel_icon = Image.open("./icons/icons8-channel-48.png", mode="r")
+# st.write(f"{videos['tags']}")
+st.write(f"<span style='color: #6495ED;'>{videos['tags']}</span>", unsafe_allow_html=True)
 
 title, view, like, dislike, category = st.columns([4,1,1,1,1.3])
 with title:
@@ -112,15 +119,92 @@ with category:
     st.image(category_icon, width=30)
     st.write(f"{videos['categoryname']}")
 
-    
-# st.markdown(f"""
-#     <div style="line-height: 1.5;">
-#         <span style="font-weight: bold;">{title}</span><br>
-#         <span style="opacity: 0.6;">channel: {videos['channeltitle']}</span><br>
-#         <span style="opacity: 0.6;">category: {videos['categoryname']}</span><br>
-#         <span style="opacity: 0.6;">{st.image(view_icon, width=30)} {videos['view']}</span>
-#     </div>
-#     """, unsafe_allow_html=True)
-
 
 st.subheader("Recommended Videos:")
+tags = ""
+tag_list = videos['tags'].split(' ')
+for tag in tag_list: tags += f"i.tags LIKE '%{tag}%' OR "
+tags = tags[:-3]
+
+query = f"""
+            select distinct 
+                i.video_id
+                , i.title
+                , i.channeltitle 
+                , v.categoryname
+                , m.view
+                , m.like
+                , m.dislike
+                , m.publishedat
+                , l.link_video
+                , i.tags
+                , i.thumbnail_link
+            from gold.informationvideos i 
+                inner join gold.linkvideos l on i.video_id = l.video_id 
+                inner join gold.videocategory v on i.categoryid = v.categoryid 
+                inner join (
+                    SELECT 
+                        video_id
+                        , MAX(view_count) AS view
+                        , MAX(likes) as like
+                        , MAX(dislikes) as dislike
+                        , MAX(publishedat) as publishedat
+                    FROM gold.metricvideos
+                    GROUP BY video_id
+                ) AS m on i.video_id = m.video_id
+            where (v.categoryname = '{videos['categoryname']}') AND
+                    ({tags}) AND i.video_id <> '{video_id}'
+            limit 10;
+    """
+data2 = run_query(query)
+
+if data2 is not None:
+    videos2 = {
+        "video_id": [e[0] for e in data2],
+        "title": [e[1] for e in data2],
+        "channeltitle": [e[2] for e in data2],
+        "categoryname": [e[3] for e in data2],
+        "view": [e[4] for e in data2],
+        "like": [e[5] for e in data2],
+        "dislike": [e[6] for e in data2],
+        "publishedat": [e[7] for e in data2],
+        "link_video": [e[8] for e in data2],
+        "tags": [e[9] for e in data2],
+        'thumbnail_link': [e[10] for e in data2]
+    }
+                        
+
+    recommended_videos = []
+    recommended_videos += videos2['link_video']
+
+    for video_id,title,channeltitle,categoryname,view,like,dislike,publishedat,link_video,tags,thumbnail_link in zip(
+        videos2['video_id'],videos2['title'],videos2['channeltitle'],videos2['categoryname'],
+        videos2['view'],videos2['like'], videos2['dislike'],videos2['publishedat'],
+        videos2['link_video'],videos2['tags'],videos2['thumbnail_link']):
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            img = Image.open(BytesIO(requests.get(thumbnail_link).content))
+            st.markdown(
+                f'<style>img {{border-radius: 12px;}}</style>',
+                unsafe_allow_html=True,
+            )
+            st.image(img, use_column_width=True)
+        
+        with col2:
+            st.write("")
+            st.markdown(f"""
+                <div style="line-height: 1.5;">
+                    <span style="font-weight: bold;">{title}</span><br>
+                    <span style="opacity: 0.6;">channel: {channeltitle}</span><br>
+                    <span style="opacity: 0.6;">category: {categoryname}</span><br>
+                    <span style="opacity: 0.6;">views: {view}</span>
+                </div>
+                """, unsafe_allow_html=True)
+            st.write("")
+            st.button("Detail", key=video_id)
+
+        st.write("---")
+        
+else: st.write(f"Not found")

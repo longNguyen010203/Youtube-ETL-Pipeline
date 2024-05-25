@@ -118,5 +118,5 @@ for video_id,title,channeltitle,thumbnail_link,link_video,categoryname,view_coun
     st.write("---")
 
 
-df = pl.DataFrame(videos)
-st.table(df)
+# df = pl.DataFrame(videos)
+# st.table(df)
