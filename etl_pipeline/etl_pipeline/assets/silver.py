@@ -184,6 +184,14 @@ def silver_trending_cleaned(context: AssetExecutionContext,
     )
     data_by_publishedAt = data_by_publishedAt.filter(pl.col("comment_count").is_not_null())
     
+    data_by_publishedAt = data_by_publishedAt.with_columns(
+        pl.col('tags').apply(lambda e: e.replace('|', ' #').replace('Z', ''))
+    ) #Squeezie arnaque #Squeezie tableau #Squeezie thread #Squeezie art #Squeezie arnaqueur
+    
+    data_by_publishedAt = data_by_publishedAt.with_columns(
+        (pl.col('tags').apply(lambda x: f"#{x}"))
+    )
+        
     data_by_publishedAt = data_by_publishedAt.with_columns([
         pl.col("categoryId").cast(pl.Int64),
         pl.col("view_count").cast(pl.Int64),
