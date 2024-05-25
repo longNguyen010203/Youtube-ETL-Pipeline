@@ -1,9 +1,1 @@
-import pandas as pd
-
-path = "/home/longnguyen/Documents/Coding/FDE-Course-2024/Project-Day/Youtube-ETL-Pipeline/dataset/youTube_trending_video/RU_youtube_trending_data.csv"
-
-df = pd.read_csv(path)
-
-df = df.drop("description", axis=1)
-
-df.to_csv(path, index=False)
+<iframe width="560" height="315" src="https://www.youtube.com/embed/dnjKNmn9cyg?si=5no60Fbe5wXOoUfA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cro

@@ -21,3 +21,4 @@ venv/
 
 .env/
 data/
+.streamlit/
