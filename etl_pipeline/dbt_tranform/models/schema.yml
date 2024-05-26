@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: search_videocategory
+    description: ""
+    columns:
+      - name: categoryid
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+      - name: categoryname
+        description: ""
+        tests:
+          - unique
+          - not_null
+          - accepted_values:
+              values: ['Film & Animation', 'Autos & Vehicles', 'Music', 'Pets & Animals', 'Sports', 'Travel & Events', 'Gaming', 'People & Blogs', 'Comedy', 'Entertainment', 'News & Politics', 'Howto & Style', 'Education', 'Science & Technology', 'Nonprofits & Activism']
+
+  - name: search_linkvideo
+    description: ""
+    columns:
+      - name: video_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+      - name: link_video
+        description: ""
+        tests:
+          - unique
+          - not_null
+    post-hook:
+      - "CREATE INDEX IF NOT EXISTS idx_video_id ON {{ this }} (video_id)"
+
+
+  - name: search_information
+    description: ""
+    columns:
+      - name: video_id
+        description: "The primary key for this table"
+        tests:
+          - not_null
+      - name: categoryname
+        description: ""
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Film & Animation', 'Autos & Vehicles', 'Music', 'Pets & Animals', 'Sports', 'Travel & Events', 'Gaming', 'People & Blogs', 'Comedy', 'Entertainment', 'News & Politics', 'Howto & Style', 'Education', 'Science & Technology', 'Nonprofits & Activism']
+
+    post-hook:
+      - "CREATE INDEX IF NOT EXISTS idx_video_id ON {{ this }} (video_id, categoryname, tags)"

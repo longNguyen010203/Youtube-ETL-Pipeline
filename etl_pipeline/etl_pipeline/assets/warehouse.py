@@ -1,4 +1,11 @@
+import os
+from pathlib import Path
 import polars as pl
+
+from dagster_dbt import load_assets_from_dbt_project
+from dagster_dbt import dbt_assets, DbtCliResource
+from dagster import AssetExecutionContext
+
 from ..partitions import monthly_partitions
 
 from dagster import (
@@ -21,7 +28,7 @@ GROUP_NAME = "warehouse"
     },
     outs={
         "videoCategory": AssetOut(
-            key_prefix=["warehouse", "gold"],
+            key_prefix=["gold"],
             io_manager_key="psql_io_manager",
             metadata={
                 "primary_keys": [
@@ -67,7 +74,7 @@ def videoCategory(context: AssetExecutionContext,
     },
     outs={
         "linkVideos": AssetOut(
-            key_prefix=["warehouse", "gold"],
+            key_prefix=["gold"],
             io_manager_key="psql_io_manager",
             metadata={
                 "primary_keys": [
@@ -113,7 +120,7 @@ def linkVideos(context: AssetExecutionContext,
     },
     outs={
         "metricVideos": AssetOut(
-            key_prefix=["warehouse", "gold"],
+            key_prefix=["gold"],
             io_manager_key="psql_io_manager",
             metadata={
                 "primary_keys": [
@@ -168,7 +175,7 @@ def metricVideos(context: AssetExecutionContext,
     },
     outs={
         "informationVideos": AssetOut(
-            key_prefix=["warehouse", "gold"],
+            key_prefix=["gold"],
             io_manager_key="psql_io_manager",
             metadata={
                 "primary_keys": [
@@ -214,3 +221,19 @@ def informationVideos(context: AssetExecutionContext,
             "columns": pl_data.columns
         }
     )
+
+
+DBT_PROJECT_DIR = Path(__file__).joinpath("..", "..", "..", "dbt_tranform").resolve()
+DBT_PROFILE_DIR = Path(__file__).joinpath("..", "..", "..", "dbt_tranform").resolve()
+DBT_MANIFEST_PATH = DBT_PROJECT_DIR.joinpath("target", "manifest.json")
+
+
+@dbt_assets(manifest=DBT_MANIFEST_PATH)
+def dbt_assets_bigquery(context: AssetExecutionContext, dbt: DbtCliResource):
+    yield from dbt.cli(["build"], context=context).stream()
+        
+# dbt_assets = load_assets_from_dbt_project(
+#     project_dir=os.fspath(DBT_PROJECT_DIR),
+#     profiles_dir=os.fspath(DBT_PROFILE_DIR),
+#     key_prefix=["dbt"]
+# )

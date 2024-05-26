@@ -1,5 +1,5 @@
-dagster==1.7.2
-dagit==1.7.2
+dagster==1.7.3
+dagit==1.7.3
 pandas==2.2.2
 polars==0.20.23
 pyarrow==16.0.0
@@ -10,3 +10,5 @@ psycopg2-binary==2.9.9
 dagster-postgres
 google-api-python-client==2.127.0
 pyspark==3.5.1
+dbt-postgres==1.7.13
+dagster-dbt==0.23.3

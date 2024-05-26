@@ -164,12 +164,12 @@ def bronze_RU_youtube_trending(context: AssetExecutionContext) -> Output[pl.Data
         "silver_youtube_trending_01": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name=GROUP_NAME#"silver"
+            group_name="silver" #GROUP_NAME
         ),
         "bronze_linkVideos_trending": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["bronze", "youtube"],
-            group_name=GROUP_NAME
+            group_name="silver" #GROUP_NAME
         )
     },
     name="bronze_linkVideos_trending",
@@ -231,12 +231,12 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
         "silver_youtube_trending_02": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["silver", "youtube"],
-            group_name=GROUP_NAME#"silver"
+            group_name="silver" #GROUP_NAME
         ),
         "bronze_videoCategory_trending": AssetOut(
             io_manager_key="minio_io_manager",
             key_prefix=["bronze", "youtube"],
-            group_name=GROUP_NAME
+            group_name="silver" #GROUP_NAME
         )
     },
     name="bronze_videoCategory_trending",

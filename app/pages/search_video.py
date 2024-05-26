@@ -37,7 +37,6 @@ with logo:
     st.image(icon, width=70)
     
 st.slider("Size")
-
 video_name = st.text_input("Enter a video name")
 st.write(f"You entered: {video_name}")
 
@@ -45,24 +44,15 @@ st.write(f"You entered: {video_name}")
 data = run_query(
     f"""
         SELECT DISTINCT 
-            i.video_id,
-            i.title, 
-            i.channeltitle,
-            i.thumbnail_link,
-            l.link_video,
-            v.categoryname,
-            m.view_count 
-        FROM gold.informationvideos i 
-            INNER JOIN gold.linkvideos l 
-                ON i.video_id  = l.video_id
-            INNER JOIN gold.videocategory v 
-                ON i.categoryid = v.categoryid 
-            INNER JOIN (
-                SELECT video_id, max(view_count) AS view_count 
-                FROM gold.metricvideos
-                GROUP BY video_id) AS m
-                ON i.video_id = m.video_id
-        WHERE i.title LIKE '%{video_name}%'
+            video_id,
+            title, 
+            channeltitle,
+            thumbnail_link,
+            link_video,
+            categoryname,
+            view
+        FROM youtube_trending.search_information
+        WHERE title LIKE '%{video_name}%'
         LIMIT 10;
     """
 )

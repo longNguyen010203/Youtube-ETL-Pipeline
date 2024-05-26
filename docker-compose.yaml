@@ -56,7 +56,7 @@ services:
       - ./etl_pipeline:/opt/dagster/app/etl_pipeline
       - ./docker-images/spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf
     ports:
-      - 4040:4040
+      - 4041:4040
     env_file: .env
     networks:
       - de_network
@@ -128,29 +128,29 @@ services:
     networks:
       - de_network
 
-  de_metabase:
-    image: metabase/metabase:latest
-    container_name: de_metabase
-    volumes:
-      - ./storage/metabase_data:/metabase_data
-    ports:
-      - "3030:3000"
-    env_file: .env
-    networks:
-      - de_network
+  # de_metabase:
+  #   image: metabase/metabase:latest
+  #   container_name: de_metabase
+  #   volumes:
+  #     - ./storage/metabase_data:/metabase_data
+  #   ports:
+  #     - "3030:3000"
+  #   env_file: .env
+  #   networks:
+  #     - de_network
 
   # Jupyter
-  de_notebook:
-    image: jupyter/all-spark-notebook:python-3.9
-    container_name: de_notebook
-    command: [ "start-notebook.sh", "--NotebookApp.token=" ]
-    ports:
-      - 8888:8888
-    volumes:
-      - ./notebooks/work:/home/jovyan/work
-    env_file: .env
-    networks:
-      - de_network
+  # de_notebook:
+  #   image: jupyter/all-spark-notebook:python-3.9
+  #   container_name: de_notebook
+  #   command: [ "start-notebook.sh", "--NotebookApp.token=" ]
+  #   ports:
+  #     - 8888:8888
+  #   volumes:
+  #     - ./notebooks/work:/home/jovyan/work
+  #   env_file: .env
+  #   networks:
+  #     - de_network
       
   # Spark
   spark-master:

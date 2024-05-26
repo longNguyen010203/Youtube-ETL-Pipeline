@@ -55,29 +55,17 @@ video_id = query_params.get('video_id', [None])[0]
 
 data = run_query(f"""
             select distinct 
-                i.title
-                , i.channeltitle 
-                , v.categoryname
-                , m.view
-                , m.like
-                , m.dislike
-                , m.publishedat
-                , l.link_video
-                , i.tags
-            from gold.informationvideos i 
-                inner join gold.linkvideos l on i.video_id = l.video_id 
-                inner join gold.videocategory v on i.categoryid = v.categoryid 
-                inner join (
-                    SELECT 
-                        video_id
-                        , MAX(view_count) AS view
-                        , MAX(likes) as like
-                        , MAX(dislikes) as dislike
-                        , MAX(publishedat) as publishedat
-                    FROM gold.metricvideos
-                    GROUP BY video_id
-                ) AS m on i.video_id = m.video_id
-            where i.video_id = '{video_id}';
+                title
+                , channeltitle 
+                , categoryname
+                , view
+                , likes
+                , dislike
+                , publishedat
+                , link_video
+                , tags
+            from youtube_trending.search_information si 
+            where video_id = '{video_id}';
     """)
 
 videos = {
@@ -123,37 +111,25 @@ with category:
 st.subheader("Recommended Videos:")
 tags = ""
 tag_list = videos['tags'].split(' ')
-for tag in tag_list: tags += f"i.tags LIKE '%{tag}%' OR "
+for tag in tag_list: tags += f"tags LIKE '%{tag}%' OR "
 tags = tags[:-3]
 
 query = f"""
             select distinct 
-                i.video_id
-                , i.title
-                , i.channeltitle 
-                , v.categoryname
-                , m.view
-                , m.like
-                , m.dislike
-                , m.publishedat
-                , l.link_video
-                , i.tags
-                , i.thumbnail_link
-            from gold.informationvideos i 
-                inner join gold.linkvideos l on i.video_id = l.video_id 
-                inner join gold.videocategory v on i.categoryid = v.categoryid 
-                inner join (
-                    SELECT 
-                        video_id
-                        , MAX(view_count) AS view
-                        , MAX(likes) as like
-                        , MAX(dislikes) as dislike
-                        , MAX(publishedat) as publishedat
-                    FROM gold.metricvideos
-                    GROUP BY video_id
-                ) AS m on i.video_id = m.video_id
-            where (v.categoryname = '{videos['categoryname']}') AND
-                    ({tags}) AND i.video_id <> '{video_id}'
+                video_id
+                , title
+                , channeltitle 
+                , categoryname
+                , view
+                , likes
+                , dislike
+                , publishedat
+                , link_video
+                , tags
+                , thumbnail_link
+            from youtube_trending.search_information 
+            where (categoryname = '{videos['categoryname']}') AND
+                    ({tags}) AND video_id <> '{video_id}'
             limit 10;
     """
 data2 = run_query(query)
