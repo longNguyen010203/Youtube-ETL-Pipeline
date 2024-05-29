@@ -3,4 +3,4 @@
 SELECT 
     categoryid,
     categoryname
-FROM {{ source("gold", "videocategory") }}
+FROM {{ source("youtube", "videocategory") }}

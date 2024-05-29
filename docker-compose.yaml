@@ -3,6 +3,7 @@ version: "3.9"
 
 services:
 
+  # MySQL
   de_mysql:
     image: mysql:8.0
     container_name: de_mysql
@@ -16,6 +17,7 @@ services:
     networks:
       - de_network
 
+  # MinIO
   minio:
     hostname: minio
     image: minio/minio
@@ -45,6 +47,7 @@ services:
     networks:
       - de_network
 
+  # Pipeline
   etl_pipeline: 
     build:
       context: ./etl_pipeline
@@ -61,6 +64,7 @@ services:
     networks:
       - de_network
 
+  # PostgreSQL
   de_psql:
     image: postgres:15
     container_name: de_psql
@@ -73,6 +77,7 @@ services:
     networks:
       - de_network
 
+  # Dagster
   de_dagster:
     build:
       context: ./docker-images/dagster/
@@ -114,20 +119,22 @@ services:
     networks:
       - de_network
 
-  de_streamlit:
-    build:
-      context: ./docker-images/streamlit
-      dockerfile: Dockerfile
-    image: de_streamlit:latest
-    container_name: de_streamlit
-    volumes:
-      - ./app:/app
-    env_file: .env
-    ports:
-      - "8501:8501"
-    networks:
-      - de_network
+  # Streamlit
+  # de_streamlit:
+  #   build:
+  #     context: ./docker-images/streamlit
+  #     dockerfile: Dockerfile
+  #   image: de_streamlit:latest
+  #   container_name: de_streamlit
+  #   volumes:
+  #     - ./app:/app
+  #   env_file: .env
+  #   ports:
+  #     - "8501:8501"
+  #   networks:
+  #     - de_network
 
+  # Metabase
   # de_metabase:
   #   image: metabase/metabase:latest
   #   container_name: de_metabase
