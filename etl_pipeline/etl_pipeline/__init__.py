@@ -8,7 +8,7 @@ from .resources import mysql, minio, postgres, youtube, spark
 
 
 all_assets = load_assets_from_modules(
-    [bronze, silver, gold, warehouse])
+    [bronze, silver])
 
 defs = Definitions(
     assets=all_assets,
