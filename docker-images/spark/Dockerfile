@@ -1,4 +1,4 @@
-FROM docker.io/bitnami/spark:3.5.1
+FROM docker.io/bitnami/spark:3.4.3
 
 USER root
 
