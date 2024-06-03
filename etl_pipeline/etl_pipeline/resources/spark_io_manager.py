@@ -7,6 +7,7 @@ import polars as pl
 import pandas as pd
 from contextlib import contextmanager
 from pyspark.sql import SparkSession, DataFrame
+from pyspark import SparkConf
 from .minio_io_manager import connect_minio
 
 
@@ -48,7 +49,7 @@ class SparkIOManager(IOManager):
         self._config = config
 
     
-    def get_spark_session(self, context, appName) -> SparkSession:
+    def get_spark_session(self, context, appName=None) -> SparkSession:
         with create_spark_session(self._config, appName) as spark:
             context.log.info("Return Object SparkSession")
             return spark
@@ -64,48 +65,67 @@ class SparkIOManager(IOManager):
         return key, tmp_file_path
     
     
-    def handle_output(self, context: OutputContext, obj: pl.DataFrame):
+    def handle_output(self, context: OutputContext, obj: DataFrame):
         key_name, tmp_file_path = self._get_path(context)
         bucket_name = self._config.get("bucket")
+        ## ====>
+        file_path = "s3a://lakehouse/" + key_name
+        context.log.info(f"file_path: {file_path}")
+        context.log.info(f"key_name: {key_name}")
         
         if context.has_partition_key:
             start, end = context.asset_partitions_time_window
             # partition_str = context.asset_partition_key
             partition_str = start.strftime("%Y%m")
-            context.log.info(f"INFO: {os.path.join(key_name, partition_str)}.pq, {tmp_file_path}")
-            key_name, tmp_file_path = os.path.join(key_name, f"{partition_str}.pq"), tmp_file_path
+            context.log.info(f"INFO: {os.path.join(key_name, partition_str)}.parquet, {tmp_file_path}")
+            key_name, tmp_file_path = os.path.join(key_name, f"{partition_str}.parquet"), tmp_file_path
         else:
-            context.log.info(f"INFO: {key_name}.pq, {tmp_file_path}")
-            key_name, tmp_file_path = f"{key_name}.pq", tmp_file_path
-            
-        obj.write_parquet(tmp_file_path)
-        with connect_minio(self._config) as client:
-            try:
-                bucket_name = self._config.get("bucket")
-                with connect_minio(self._config) as client:
-                    # Make bucket if not exist.
-                    found = client.bucket_exists(bucket_name)
-                    if not found:
-                        client.make_bucket(bucket_name)
-                    else:
-                        print(f"Bucket {bucket_name} already exists")
-                    client.fput_object(bucket_name, key_name, tmp_file_path)
-                    row_count = len(obj)
-                    context.add_output_metadata(
-                        {
-                            "path": key_name, 
-                            "records": row_count, 
-                            "tmp": tmp_file_path
-                        }
-                    )
-                    # clean up tmp file
-                    os.remove(tmp_file_path)
+            context.log.info(f"INFO: {key_name}.parquet, {tmp_file_path}")
+            file_path, tmp_file_path = f"{file_path}.parquet", tmp_file_path
+        
+        
+        # obj.write_parquet(tmp_file_path)
+        obj.write.mode("overwrite").parquet(file_path)
+        # obj_pd = obj.toPandas()
+        # obj_pd.to_parquet(tmp_file_path)
+        
+        # context.log.info(f"os.listdir(tmp_file_path): {len(os.listdir(tmp_file_path))}")
+        # context.log.info(f"first: {os.listdir(tmp_file_path)[0]}")
+        # context.log.info(f"second: {os.listdir(tmp_file_path)[1]}")
+        # context.log.info(f"three: {os.listdir(tmp_file_path)[2]}")
+        
+        # if os.path.isdir(tmp_file_path):
+        #     parquet_file = [file for file in os.listdir(tmp_file_path) if file.endswith(".snappy.parquet")][0]
+        #     tmp_file_path_new = os.path.join("/tmp/", parquet_file)
+        
+        # with connect_minio(self._config) as client:
+        #     try:
+        #         bucket_name = self._config.get("bucket")
+        #         with connect_minio(self._config) as client:
+        #             # Make bucket if not exist.
+        #             found = client.bucket_exists(bucket_name)
+        #             if not found:
+        #                 client.make_bucket(bucket_name)
+        #             else:
+        #                 print(f"Bucket {bucket_name} already exists")
+        #             client.fput_object(bucket_name, key_name, tmp_file_path)
+        #             row_count = obj.count()
+        #             context.add_output_metadata(
+        #                 {
+        #                     "path": key_name, 
+        #                     "records": row_count, 
+        #                     "tmp": tmp_file_path
+        #                 }
+        #             )
+        #             # clean up tmp file
+        #             os.remove(tmp_file_path)
+        #             # os.remove(tmp_file_path_new)
                     
-            except Exception as e:
-                raise e
+        #     except Exception as e:
+        #         raise e
     
     
-    def load_input(self, context: InputContext) -> pl.DataFrame:
+    def load_input(self, context: InputContext) -> DataFrame:
         key_name, tmp_file_path = self._get_path(context)
         bucket_name = self._config.get("bucket")
         
@@ -113,11 +133,11 @@ class SparkIOManager(IOManager):
             start, end = context.asset_partitions_time_window
             # partition_str = context.asset_partition_key
             partition_str = start.strftime("%Y%m")
-            context.log.info(f"INFO: {os.path.join(key_name, partition_str)}.pq, {tmp_file_path}")
-            key_name, tmp_file_path = os.path.join(key_name, f"{partition_str}.pq"), tmp_file_path
+            context.log.info(f"INFO: {os.path.join(key_name, partition_str)}.parquet, {tmp_file_path}")
+            key_name, tmp_file_path = os.path.join(key_name, f"{partition_str}.parquet"), tmp_file_path
         else:
-            context.log.info(f"INFO: {key_name}.pq, {tmp_file_path}")
-            key_name, tmp_file_path = f"{key_name}.pq", tmp_file_path
+            context.log.info(f"INFO: {key_name}.parquet, {tmp_file_path}")
+            key_name, tmp_file_path = f"{key_name}.parquet", tmp_file_path
             
         with connect_minio(self._config) as client:
             try:
@@ -134,8 +154,10 @@ class SparkIOManager(IOManager):
                     context.log.info(f"INFO -> tmp_file_path: {tmp_file_path}")
                     
                     client.fget_object(bucket_name, key_name, tmp_file_path)
-                    df = pl.read_parquet(tmp_file_path)
+                    # df = pl.read_parquet(tmp_file_path)
                     
+                    spark = self.get_spark_session(context)
+                    df = spark.read.parquet(tmp_file_path)
                     return df
                     
             except Exception as e:
