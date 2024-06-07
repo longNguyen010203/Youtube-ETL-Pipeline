@@ -100,12 +100,17 @@ def silver_linkVideos_cleaned(context: AssetExecutionContext,
         linkVideos["videoId"] == trending["video_id"],
         how="outer",
     ).select(trending.video_id, linkVideos.link_video)
+    spark_df.cache()
+    
     # fill NA for link video
     spark_df = spark_df.withColumn("link_video",when( 
                 col("link_video").isNull(), 
-                concat(lit("www.youtube.com/embed/"), 
+                concat(lit("www.youtube.com/embed/"),
                 col("video_id"))).otherwise(col("link_video"))
     )
+    context.log.info(f"Cleaning for {context.asset_key.path[-1]} success 🙂")
+    
+    spark_df.unpersist()
     
     # trending = pl.concat(
     #     [
@@ -134,7 +139,7 @@ def silver_linkVideos_cleaned(context: AssetExecutionContext,
         metadata={
             "File Name": MetadataValue.text("linkVideos_cleaned.pq"),
             "Number Columns": MetadataValue.int(len(spark_df.columns)),
-            "Number Records": MetadataValue.int(spark_df.count())
+            # "Number Records": MetadataValue.int(spark_df.count())
         }
     )
     
