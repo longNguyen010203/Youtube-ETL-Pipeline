@@ -1,4 +1,4 @@
-FROM python:3.10.6-slim
+FROM python:3.11-slim
 
 ARG openjdk_version="17"
 
@@ -23,14 +23,14 @@ RUN curl -O https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.18.41/s3-
     && curl -O https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.1026/aws-java-sdk-bundle-1.11.1026.jar \
     && curl -O https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar \
     && curl -O https://repo1.maven.org/maven2/io/delta/delta-storage/2.2.0/delta-storage-2.2.0.jar \
-    && curl -O https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.4.3/hadoop-aws-3.4.3.jar \
+    && curl -O https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.2/hadoop-aws-3.3.2.jar \
     && mkdir -p /usr/local/spark/jars \
     && mv s3-2.18.41.jar /usr/local/spark/jars \
     && mv aws-java-sdk-1.12.367.jar /usr/local/spark/jars \
     && mv aws-java-sdk-bundle-1.11.1026.jar /usr/local/spark/jars \
     && mv delta-core_2.12-2.2.0.jar /usr/local/spark/jars \
     && mv delta-storage-2.2.0.jar /usr/local/spark/jars \
-    && mv hadoop-aws-3.4.3.jar /usr/local/spark/jars
+    && mv hadoop-aws-3.3.2.jar /usr/local/spark/jars
 
 
 WORKDIR /opt/dagster/app/etl_pipeline
@@ -39,4 +39,3 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . /opt/dagster/app/etl_pipeline
 
 CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-m", "etl_pipeline"]
-
