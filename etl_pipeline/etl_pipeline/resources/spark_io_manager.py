@@ -81,13 +81,13 @@ class SparkIOManager(IOManager):
             key_name, tmp_file_path = os.path.join(key_name, f"{partition_str}.parquet"), tmp_file_path
         else:
             context.log.info(f"INFO: {key_name}.parquet, {tmp_file_path}")
-            file_path, tmp_file_path = f"{file_path}.parquet", tmp_file_path
+            key_name, tmp_file_path = f"{key_name}.parquet", tmp_file_path
         
         
         # obj.write_parquet(tmp_file_path)
-        obj.write.mode("overwrite").parquet(file_path)
-        # obj_pd = obj.toPandas()
-        # obj_pd.to_parquet(tmp_file_path)
+        # obj.coalesce(1).write.mode("overwrite").parquet(tmp_file_path)
+        obj_pd = obj.toPandas()
+        obj_pd.to_parquet(tmp_file_path)
         
         # context.log.info(f"os.listdir(tmp_file_path): {len(os.listdir(tmp_file_path))}")
         # context.log.info(f"first: {os.listdir(tmp_file_path)[0]}")
@@ -98,31 +98,31 @@ class SparkIOManager(IOManager):
         #     parquet_file = [file for file in os.listdir(tmp_file_path) if file.endswith(".snappy.parquet")][0]
         #     tmp_file_path_new = os.path.join("/tmp/", parquet_file)
         
-        # with connect_minio(self._config) as client:
-        #     try:
-        #         bucket_name = self._config.get("bucket")
-        #         with connect_minio(self._config) as client:
-        #             # Make bucket if not exist.
-        #             found = client.bucket_exists(bucket_name)
-        #             if not found:
-        #                 client.make_bucket(bucket_name)
-        #             else:
-        #                 print(f"Bucket {bucket_name} already exists")
-        #             client.fput_object(bucket_name, key_name, tmp_file_path)
-        #             row_count = obj.count()
-        #             context.add_output_metadata(
-        #                 {
-        #                     "path": key_name, 
-        #                     "records": row_count, 
-        #                     "tmp": tmp_file_path
-        #                 }
-        #             )
-        #             # clean up tmp file
-        #             os.remove(tmp_file_path)
-        #             # os.remove(tmp_file_path_new)
+        with connect_minio(self._config) as client:
+            try:
+                bucket_name = self._config.get("bucket")
+                with connect_minio(self._config) as client:
+                    # Make bucket if not exist.
+                    found = client.bucket_exists(bucket_name)
+                    if not found:
+                        client.make_bucket(bucket_name)
+                    else:
+                        print(f"Bucket {bucket_name} already exists")
+                    client.fput_object(bucket_name, key_name, tmp_file_path)
+                    row_count = obj.count()
+                    context.add_output_metadata(
+                        {
+                            "path": key_name, 
+                            "records": row_count, 
+                            "tmp": tmp_file_path
+                        }
+                    )
+                    # clean up tmp file
+                    os.remove(tmp_file_path)
+                    # os.remove(tmp_file_path_new)
                     
-        #     except Exception as e:
-        #         raise e
+            except Exception as e:
+                raise e
     
     
     def load_input(self, context: InputContext) -> DataFrame:
