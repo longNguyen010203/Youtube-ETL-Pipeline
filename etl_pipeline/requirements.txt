@@ -12,3 +12,4 @@ google-api-python-client==2.127.0
 pyspark==3.4.3
 # dbt-postgres==1.7.13
 dagster-dbt==0.23.3
+dagster-spark==0.23.3
