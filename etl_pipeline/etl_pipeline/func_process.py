@@ -3,3 +3,6 @@ def replace_str(value: str):
 
 def format_date(value: str):
     return value.replace("T", " ").replace("Z", "")
+
+def convert(value: str):
+    return value.replace('"', '')
