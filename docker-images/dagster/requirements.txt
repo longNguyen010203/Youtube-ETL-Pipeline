@@ -2,3 +2,4 @@ dagster==1.7.3
 dagit==1.7.3
 dagster-postgres
 dagster-dbt==0.23.3
+dagster-spark==0.23.3
