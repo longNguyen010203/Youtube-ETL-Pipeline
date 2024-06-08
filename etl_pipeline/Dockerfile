@@ -5,7 +5,9 @@ ARG openjdk_version="17"
 # USER root 
 
 RUN apt-get update --yes && \
-    apt-get install --yes curl "openjdk-${openjdk_version}-jre-headless" ca-certificates-java procps && \
+    apt-get install --yes  \
+        curl \
+        "openjdk-${openjdk_version}-jre-headless" ca-certificates-java procps && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
@@ -24,7 +26,7 @@ RUN curl -O https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.18.41/s3-
     && curl -O https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.2.0/delta-core_2.12-2.2.0.jar \
     && curl -O https://repo1.maven.org/maven2/io/delta/delta-storage/2.2.0/delta-storage-2.2.0.jar \
     && curl -O https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.2/hadoop-aws-3.3.2.jar \
-    && mkdir -p /usr/local/spark/jars \
+#    && mkdir -p /usr/local/spark/jars \
     && mv s3-2.18.41.jar /usr/local/spark/jars \
     && mv aws-java-sdk-1.12.367.jar /usr/local/spark/jars \
     && mv aws-java-sdk-bundle-1.11.1026.jar /usr/local/spark/jars \
@@ -33,9 +35,9 @@ RUN curl -O https://repo1.maven.org/maven2/software/amazon/awssdk/s3/2.18.41/s3-
     && mv hadoop-aws-3.3.2.jar /usr/local/spark/jars
 
 
-WORKDIR /opt/dagster/app/etl_pipeline
-COPY requirements.txt /opt/dagster/app/etl_pipeline
+WORKDIR /opt/dagster/app
+COPY requirements.txt /opt/dagster/app
 RUN pip install --upgrade pip && pip install -r requirements.txt
-COPY . /opt/dagster/app/etl_pipeline
+COPY . /opt/dagster/app
 
 CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-m", "etl_pipeline"]
