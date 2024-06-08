@@ -56,7 +56,7 @@ services:
     image: etl_pipeline:latest
     restart: always
     volumes:
-      - ./etl_pipeline:/opt/dagster/app/etl_pipeline
+      - ./etl_pipeline:/opt/dagster/app
       - ./docker-images/spark/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf
     ports:
       - 4041:4040
@@ -180,7 +180,7 @@ services:
       - de_network
 
   spark-worker:
-    image: docker.io/bitnami/spark:3.5.1
+    image: docker.io/bitnami/spark:3.4.3
     depends_on: 
       - spark-master
     deploy: 
