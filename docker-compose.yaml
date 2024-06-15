@@ -170,7 +170,7 @@ services:
     volumes:
       - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./data:/opt/spark-data
-    env_file: .env.spark_master
+    env_file: .env
     expose:
       - "7077"
     ports:
@@ -185,7 +185,7 @@ services:
       - spark-master
     deploy: 
       replicas: 3
-    env_file: .env.spark_worker
+    env_file: .env
     volumes:
       - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - ./data:/opt/spark-data

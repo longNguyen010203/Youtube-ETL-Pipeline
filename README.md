@@ -59,10 +59,26 @@ Here's what you can do with:
 
 ## 🚦 Running the Project
 To run the project in your local environment, follow these steps:
-1. Run `git clone https://github.com/longNguyen010203/Youtube-ETL-Pipeline.git` to clone the repository to your local machine.
-2. run `make build` to build the images from the Dockerfile
-3. run `make up` to pull images from docker hub and launch services
-4. run `make to_mysql_root` to access the SQL editor on the terminal
+1. Run command after to clone the repository to your local machine.
+~~~python
+   git clone https://github.com/longNguyen010203/Youtube-ETL-Pipeline.git
+~~~
+
+2. Run command after to build the images from the Dockerfile
+~~~python
+   make build
+~~~
+
+3. Run command after to pull images from docker hub and launch services
+~~~
+   make up
+~~~
+
+4. Run command after to access the SQL editor on the terminal
+~~~
+   make to_mysql_root
+~~~
+
 5. Check if local_infile was turned on
 ~~~python
     SET GLOBAL local_infile=TRUE;
@@ -75,5 +91,5 @@ To run the project in your local environment, follow these steps:
 9. Open [http://localhost:3001](http://localhost:3001) to view Dagster UI and click `Materialize all` button to run the Pipeline
 10. Open [http://localhost:9001](http://localhost:9001) to view MinIO UI and check the data to be loaded
 11. Open [http://localhost:8080](http://localhost:8080) to view Spark UI and three workers are running
-12. Open [http://localhost:3030](http://localhost:3030) to see charts and dashboards
-13. Open [http://localhost:8501](http://localhost:8501) to try out the video recommendation app
+12. Open [http://localhost:3030](http://localhost:3030) to see charts and dashboards on Metabase
+13. Open [http://localhost:8501](http://localhost:8501) to try out the video recommendation app on Streamlit
