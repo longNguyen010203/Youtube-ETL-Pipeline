@@ -120,31 +120,31 @@ services:
       - de_network
 
   # Streamlit
-  # de_streamlit:
-  #   build:
-  #     context: ./docker-images/streamlit
-  #     dockerfile: Dockerfile
-  #   image: de_streamlit:latest
-  #   container_name: de_streamlit
-  #   volumes:
-  #     - ./app:/app
-  #   env_file: .env
-  #   ports:
-  #     - "8501:8501"
-  #   networks:
-  #     - de_network
+  de_streamlit:
+    build:
+      context: ./docker-images/streamlit
+      dockerfile: Dockerfile
+    image: de_streamlit:latest
+    container_name: de_streamlit
+    volumes:
+      - ./app:/app
+    env_file: .env
+    ports:
+      - "8501:8501"
+    networks:
+      - de_network
 
   # Metabase
-  # de_metabase:
-  #   image: metabase/metabase:latest
-  #   container_name: de_metabase
-  #   volumes:
-  #     - ./storage/metabase_data:/metabase_data
-  #   ports:
-  #     - "3030:3000"
-  #   env_file: .env
-  #   networks:
-  #     - de_network
+  de_metabase:
+    image: metabase/metabase:latest
+    container_name: de_metabase
+    volumes:
+      - ./storage/metabase_data:/metabase_data
+    ports:
+      - "3030:3000"
+    env_file: .env
+    networks:
+      - de_network
 
   # Jupyter
   # de_notebook:
