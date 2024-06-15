@@ -3,7 +3,7 @@ In this project, I build a simple data pipeline following the ETL(extract - tran
 
 ## 🔦 About Project
 
-#### 1. Pipeline Design
+Pipeline Design
 <img src="./images/data_flow.png" style="width: 100%;">
 
  - **Data Source**: This project uses two main `data sources`: [Youtube Trending Video](https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset) data and [Youtube API](https://developers.google.com/youtube/v3)
@@ -44,7 +44,15 @@ Here's what you can do with:
 
 ## 👩🏽‍🍳 The Process
 
+
+
 ## 📚 What I Learned
+
+During this project, I learned important skills, understood complex ideas, knew how to install and set up popular and useful tools, which brought me closer to becoming a `Data Engineer`.
+ - **Logical thinking**: I learned how to think like a data person, find the cause of the data `problem` and then come up with the most `reasonable solution` to achieve high data `accuracy`.
+ - **Architecture**: I understand and grasp the `ideas` and `architecture` of today's popular and popular big data processing tool, `Apache Spark`.
+ - **Installation**: I learned how to install popular data processing, visualization and storage tools such as: `Metabase`, `Streamlit`, `MinIO`,... with `Docker`
+ - **Setup**: I know how to setup `Spark Standalone Cluster` using `Docker` with three `Worker Nodes` on my local machine
 
 ## 💭 How can it be improved?
  - Add more `data sources` to increase data richness.
@@ -59,37 +67,35 @@ Here's what you can do with:
 
 ## 🚦 Running the Project
 To run the project in your local environment, follow these steps:
-1. Run command after to clone the repository to your local machine.
+1. Run command after to clone the `repository` to your `local machine`.
 ~~~python
    git clone https://github.com/longNguyen010203/Youtube-ETL-Pipeline.git
 ~~~
 
-2. Run command after to build the images from the Dockerfile
+2. Run the following commands to build the images from the `Dockerfile`, pull images from `docker hub` and launch services
 ~~~python
    make build
-~~~
-
-3. Run command after to pull images from docker hub and launch services
-~~~
    make up
 ~~~
 
-4. Run command after to access the SQL editor on the terminal
+3. Run the following commands to access the `SQL editor` on the `terminal` and Check if `local_infile` was turned on
 ~~~
    make to_mysql_root
+
+   SET GLOBAL local_infile=TRUE;
+   SHOW VARIABLES LIKE "local_infile";
+   exit
 ~~~
 
-5. Check if local_infile was turned on
+4. Run the following commands to create tables with schema for `MySQL`, load data from `CSV` file to `MySQL` and create tables with schema for `PostgreSQL`
 ~~~python
-    SET GLOBAL local_infile=TRUE;
-    SHOW VARIABLES LIKE "local_infile";
-    exit
+   make mysql_create
+   make mysql_load
+   make psql_create
 ~~~
-6. run `make mysql_create` to create tables with schema for MySQL
-7. run `make mysql_load` to load data from CSV file to MySQL
-8. run `make psql_create` to create tables with schema for PostgreSQL
-9. Open [http://localhost:3001](http://localhost:3001) to view Dagster UI and click `Materialize all` button to run the Pipeline
-10. Open [http://localhost:9001](http://localhost:9001) to view MinIO UI and check the data to be loaded
-11. Open [http://localhost:8080](http://localhost:8080) to view Spark UI and three workers are running
-12. Open [http://localhost:3030](http://localhost:3030) to see charts and dashboards on Metabase
-13. Open [http://localhost:8501](http://localhost:8501) to try out the video recommendation app on Streamlit
+
+5. Open [http://localhost:3001](http://localhost:3001) to view `Dagster UI` and click `Materialize all` button to run the Pipeline
+6. Open [http://localhost:9001](http://localhost:9001) to view `MinIO UI` and check the data to be loaded
+7. Open [http://localhost:8080](http://localhost:8080) to view `Spark UI` and three `workers` are running
+8. Open [http://localhost:3030](http://localhost:3030) to see charts and `dashboards` on `Metabase`
+9. Open [http://localhost:8501](http://localhost:8501) to try out the `video recommendation` app on `Streamlit`
