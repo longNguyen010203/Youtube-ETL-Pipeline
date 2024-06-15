@@ -2,8 +2,6 @@
 In this project, I build a simple data pipeline following the ETL(extract - transform - load) model using Youtube-Trending-Video dataset, perform data processing, transformation and calculation using Apache Spark big data technology, serving the video search and recommendation system
 
 ## 🔦 About Project
-
-Pipeline Design
 <img src="./images/data_flow.png" style="width: 100%;">
 
  - **Data Source**: This project uses two main `data sources`: [Youtube Trending Video](https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset) data and [Youtube API](https://developers.google.com/youtube/v3)
@@ -45,7 +43,6 @@ Here's what you can do with:
 ## 👩🏽‍🍳 The Process
 
 
-
 ## 📚 What I Learned
 
 During this project, I learned important skills, understood complex ideas, knew how to install and set up popular and useful tools, which brought me closer to becoming a `Data Engineer`.
@@ -53,6 +50,9 @@ During this project, I learned important skills, understood complex ideas, knew 
  - **Architecture**: I understand and grasp the `ideas` and `architecture` of today's popular and popular big data processing tool, `Apache Spark`.
  - **Installation**: I learned how to install popular data processing, visualization and storage tools such as: `Metabase`, `Streamlit`, `MinIO`,... with `Docker`
  - **Setup**: I know how to setup `Spark Standalone Cluster` using `Docker` with three `Worker Nodes` on my local machine
+
+### 📈 Overall Growth: 
+Each part of this project has helped me understand more about how to build a data engineering, data management project. Learn new knowledge and improve my skills in future work
 
 ## 💭 How can it be improved?
  - Add more `data sources` to increase data richness.
@@ -99,3 +99,5 @@ To run the project in your local environment, follow these steps:
 7. Open [http://localhost:8080](http://localhost:8080) to view `Spark UI` and three `workers` are running
 8. Open [http://localhost:3030](http://localhost:3030) to see charts and `dashboards` on `Metabase`
 9. Open [http://localhost:8501](http://localhost:8501) to try out the `video recommendation` app on `Streamlit`
+
+## 🍿 Video
