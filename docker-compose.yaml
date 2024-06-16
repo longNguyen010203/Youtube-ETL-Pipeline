@@ -159,38 +159,38 @@ services:
   #   networks:
   #     - de_network
       
-  # Spark
-  spark-master:
-    build:
-      context: ./docker-images/spark
-      dockerfile: Dockerfile
-    image: spark-master:latest
-    container_name: spark-master
-    hostname: spark_master
-    volumes:
-      - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
-      - ./data:/opt/spark-data
-    env_file: .env
-    expose:
-      - "7077"
-    ports:
-      - "7077:7077"
-      - "8080:8080"
-    networks:
-      - de_network
+  # # Spark
+  # spark-master:
+  #   build:
+  #     context: ./docker-images/spark
+  #     dockerfile: Dockerfile
+  #   image: spark-master:latest
+  #   container_name: spark-master
+  #   hostname: spark_master
+  #   volumes:
+  #     - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+  #     - ./data:/opt/spark-data
+  #   env_file: .env.spark_master
+  #   expose:
+  #     - "7077"
+  #   ports:
+  #     - "7077:7077"
+  #     - "8080:8080"
+  #   networks:
+  #     - de_network
 
-  spark-worker:
-    image: docker.io/bitnami/spark:3.4.3
-    depends_on: 
-      - spark-master
-    deploy: 
-      replicas: 3
-    env_file: .env
-    volumes:
-      - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
-      - ./data:/opt/spark-data
-    networks:
-      - de_network
+  # spark-worker:
+  #   image: docker.io/bitnami/spark:3.4.3
+  #   depends_on: 
+  #     - spark-master
+  #   deploy: 
+  #     replicas: 3
+  #   env_file: .env.spark_worker
+  #   volumes:
+  #     - ./docker-images/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+  #     - ./data:/opt/spark-data
+  #   networks:
+  #     - de_network
 
 networks:
   de_network:

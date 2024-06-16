@@ -1,10 +1,8 @@
-# <img src="images/youtube_icon.png" alt="My Icon" width="50" height="50" style="vertical-align: middle;"> Youtube-ETL-Pipeline
-
-
+# 🌄 Youtube-ETL-Pipeline
 In this project, I build a simple data pipeline following the ETL(extract - transform - load) model using Youtube-Trending-Video dataset, perform data processing, transformation and calculation using Apache Spark big data technology, serving the video search and recommendation system
 
 ## 🔦 About Project
-<img src="./images/data_flow.png" style="width: 100%;">
+<img src="./public/images/data_flow.png" style="width: 100%;">
 
  - **Data Source**: This project uses two main `data sources`: [Youtube Trending Video](https://www.kaggle.com/datasets/rsrishav/youtube-trending-video-dataset) data and [Youtube API](https://developers.google.com/youtube/v3)
     - `Youtube Trending Video` data is downloaded from [Kaggle.com](https://www.kaggle.com) with `.csv` file format, then loaded into `MySQL`, considered as a `data source`
@@ -70,18 +68,18 @@ Each part of this project has helped me understand more about how to build a dat
 ## 🚦 Running the Project
 To run the project in your local environment, follow these steps:
 1. Run command after to clone the `repository` to your `local machine`.
-~~~python
+~~~bash
    git clone https://github.com/longNguyen010203/Youtube-ETL-Pipeline.git
 ~~~
 
 2. Run the following commands to build the images from the `Dockerfile`, pull images from `docker hub` and launch services
-~~~python
+~~~bash
    make build
    make up
 ~~~
 
 3. Run the following commands to access the `SQL editor` on the `terminal` and Check if `local_infile` was turned on
-~~~
+~~~python
    make to_mysql_root
 
    SET GLOBAL local_infile=TRUE;
@@ -90,7 +88,7 @@ To run the project in your local environment, follow these steps:
 ~~~
 
 4. Run the following commands to create tables with schema for `MySQL`, load data from `CSV` file to `MySQL` and create tables with schema for `PostgreSQL`
-~~~python
+~~~bash
    make mysql_create
    make mysql_load
    make psql_create
@@ -102,5 +100,4 @@ To run the project in your local environment, follow these steps:
 8. Open [http://localhost:3030](http://localhost:3030) to see charts and `dashboards` on `Metabase`
 9. Open [http://localhost:8501](http://localhost:8501) to try out the `video recommendation` app on `Streamlit`
 
-## 🍿 Video ![alt text](image.png)
-
+## 🍿 Video

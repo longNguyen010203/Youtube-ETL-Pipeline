@@ -187,10 +187,6 @@ def bronze_linkVideos_trending(context: AssetExecutionContext,
             bronze_IN_youtube_trending
         ]
     )
-    # data = data.filter((pl.col("publishedAt") != "") | (pl.col("publishedAt") != "35"))
-    # 2020-08-11T16:34:06Z
-    # data = data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
-    # data = data.with_columns(pl.col("publishedAt").str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S"))
     
     pl_data: pl.DataFrame = context \
             .resources \
@@ -235,9 +231,6 @@ def bronze_videoCategory_trending(context: AssetExecutionContext,
             bronze_RU_youtube_trending
         ]
     )
-    # 2020-08-11T16:34:06Z
-    # data = data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
-    # data = data.with_columns(pl.col("publishedAt").str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S"))
     
     pl_data: pl.DataFrame = context \
             .resources \
@@ -290,6 +283,10 @@ def bronze_youtube_trending(context: AssetExecutionContext,
             bronze_RU_youtube_trending
         ]
     )
+    
+    # 2020-08-11T16:34:06Z
+    pl_data = pl_data.with_columns(pl.col('publishedAt').apply(lambda e: e.replace('T', ' ').replace('Z', '')))
+    pl_data = pl_data.with_columns(pl.col("publishedAt").str.strptime(pl.Datetime, format="%Y-%m-%d %H:%M:%S"))
     
     return Output(
         value=pl_data,

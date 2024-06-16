@@ -22,3 +22,7 @@ venv/
 .env/
 data/
 .streamlit/
+
+.env.spark_master
+.env.spark_worker
+.env

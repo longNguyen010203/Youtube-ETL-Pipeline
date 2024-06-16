@@ -1,9 +1,4 @@
-import os
-from pathlib import Path
 import polars as pl
-
-from dagster_dbt import load_assets_from_dbt_project
-from dagster_dbt import dbt_assets, DbtCliResource
 from dagster import AssetExecutionContext
 
 from ..partitions import monthly_partitions
@@ -221,19 +216,3 @@ def informationVideos(context: AssetExecutionContext,
             "columns": pl_data.columns
         }
     )
-
-
-DBT_PROJECT_DIR = Path(__file__).joinpath("..", "..", "..", "dbt_tranform").resolve()
-DBT_PROFILE_DIR = Path(__file__).joinpath("..", "..", "..", "dbt_tranform").resolve()
-DBT_MANIFEST_PATH = DBT_PROJECT_DIR.joinpath("target", "manifest.json")
-
-
-@dbt_assets(manifest=DBT_MANIFEST_PATH)
-def dbt_assets_bigquery(context: AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["build"], context=context).stream()
-        
-# dbt_assets = load_assets_from_dbt_project(
-#     project_dir=os.fspath(DBT_PROJECT_DIR),
-#     profiles_dir=os.fspath(DBT_PROFILE_DIR),
-#     key_prefix=["dbt"]
-# )

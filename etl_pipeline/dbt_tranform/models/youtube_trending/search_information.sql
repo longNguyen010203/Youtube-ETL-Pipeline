@@ -1,3 +1,5 @@
+
+
 {{ config(materialized="table") }}
 
 select distinct 
@@ -12,9 +14,10 @@ select distinct
     , l.link_video
     , i.tags
     , i.thumbnail_link
-from {{ source('youtube', 'informationvideos') }} i 
-    inner join {{ source('youtube', 'linkvideos') }} l on i.video_id = l.video_id 
-    inner join {{ source('youtube', 'videocategory') }} v on i.categoryid = v.categoryid 
+
+from {{ source('gold', 'informationvideos') }} i 
+    inner join {{ source('gold', 'linkvideos') }} l on i.video_id = l.video_id 
+    inner join {{ source('gold', 'videocategory') }} v on i.categoryid = v.categoryid 
     inner join (
         SELECT 
             video_id
@@ -22,7 +25,7 @@ from {{ source('youtube', 'informationvideos') }} i
             , MAX(likes) as like
             , MAX(dislikes) as dislike
             , MAX(publishedat) as publishedat
-        FROM {{ source('youtube', 'metricvideos') }}
+        FROM {{ source('gold', 'metricvideos') }}
         GROUP BY video_id
     ) AS m on i.video_id = m.video_id
 

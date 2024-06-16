@@ -1,35 +1,22 @@
+
 version: 2
 
 sources:
-  - name: youtube
-    schema: gold
-    database: youTube_trending_video
-
+  - name: gold
     tables:
-      - name: informationvideos
-      - name: linkvideos
-      - name: metricvideos
       - name: videocategory
-
-
-# version: 2
-
-# sources:
-#   - name: gold
-#     tables:
-#       - name: videoCategory
-#         meta:
-#           dagster:
-#             asset_key: ["warehouse", "gold", "videoCategory"]
-#       - name: linkVideos
-#         meta:
-#           dagster:
-#             asset_key: ["warehouse", "gold", "linkVideos"]
-#       - name: metricVideos
-#         meta:
-#           dagster:
-#             asset_key: ["warehouse", "gold", "metricVideos"]
-#       - name: informationVideos
-#         meta:
-#           dagster:
-#             asset_key: ["warehouse", "gold", "informationVideos"]
+        meta:
+          dagster:
+            asset_key: ["warehouse", "gold", "videoCategory"]
+      - name: linkvideos
+        meta:
+          dagster:
+            asset_key: ["warehouse", "gold", "linkVideos"]
+      - name: metricvideos
+        meta:
+          dagster:
+            asset_key: ["warehouse", "gold", "metricVideos"]
+      - name: informationvideos
+        meta:
+          dagster:
+            asset_key: ["warehouse", "gold", "informationVideos"]

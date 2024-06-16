@@ -65,7 +65,7 @@ class SparkIOManager(IOManager):
         return key, tmp_file_path
     
     
-    def handle_output(self, context: OutputContext, obj: DataFrame):
+    def handle_output(self, context: OutputContext, obj: pl.DataFrame):
         key_name, tmp_file_path = self._get_path(context)
         bucket_name = self._config.get("bucket")
         ## ====>
@@ -84,20 +84,8 @@ class SparkIOManager(IOManager):
             key_name, tmp_file_path = f"{key_name}.parquet", tmp_file_path
         
         
-        # obj.write_parquet(tmp_file_path)
-        # obj.coalesce(1).write.mode("overwrite").parquet(tmp_file_path)
-        obj_pd = obj.toPandas()
-        obj_pd.to_parquet(tmp_file_path)
-        
-        # context.log.info(f"os.listdir(tmp_file_path): {len(os.listdir(tmp_file_path))}")
-        # context.log.info(f"first: {os.listdir(tmp_file_path)[0]}")
-        # context.log.info(f"second: {os.listdir(tmp_file_path)[1]}")
-        # context.log.info(f"three: {os.listdir(tmp_file_path)[2]}")
-        
-        # if os.path.isdir(tmp_file_path):
-        #     parquet_file = [file for file in os.listdir(tmp_file_path) if file.endswith(".snappy.parquet")][0]
-        #     tmp_file_path_new = os.path.join("/tmp/", parquet_file)
-        
+        obj.write_parquet(tmp_file_path)
+ 
         with connect_minio(self._config) as client:
             try:
                 bucket_name = self._config.get("bucket")
@@ -109,7 +97,7 @@ class SparkIOManager(IOManager):
                     else:
                         print(f"Bucket {bucket_name} already exists")
                     client.fput_object(bucket_name, key_name, tmp_file_path)
-                    row_count = obj.count()
+                    row_count = obj.shape[0]
                     context.add_output_metadata(
                         {
                             "path": key_name, 
@@ -119,13 +107,12 @@ class SparkIOManager(IOManager):
                     )
                     # clean up tmp file
                     os.remove(tmp_file_path)
-                    # os.remove(tmp_file_path_new)
                     
             except Exception as e:
                 raise e
     
     
-    def load_input(self, context: InputContext) -> DataFrame:
+    def load_input(self, context: InputContext) -> pl.DataFrame:
         key_name, tmp_file_path = self._get_path(context)
         bucket_name = self._config.get("bucket")
         
@@ -154,10 +141,8 @@ class SparkIOManager(IOManager):
                     context.log.info(f"INFO -> tmp_file_path: {tmp_file_path}")
                     
                     client.fget_object(bucket_name, key_name, tmp_file_path)
-                    # df = pl.read_parquet(tmp_file_path)
+                    df = pl.read_parquet(tmp_file_path)
                     
-                    spark = self.get_spark_session(context)
-                    df = spark.read.parquet(tmp_file_path)
                     return df
                     
             except Exception as e:

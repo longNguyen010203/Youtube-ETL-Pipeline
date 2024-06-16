@@ -1,6 +1,7 @@
+
 {{ config(materialized="table") }}
 
 SELECT 
     categoryid,
     categoryname
-FROM {{ source("youtube", "videocategory") }}
+FROM {{ source("gold", "videocategory") }}
