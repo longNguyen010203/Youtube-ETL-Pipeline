@@ -1,4 +1,6 @@
-# 🌄 Youtube-ETL-Pipeline
+# <img src="images/youtube_icon.png" alt="My Icon" width="50" height="50" style="vertical-align: middle;"> Youtube-ETL-Pipeline
+
+
 In this project, I build a simple data pipeline following the ETL(extract - transform - load) model using Youtube-Trending-Video dataset, perform data processing, transformation and calculation using Apache Spark big data technology, serving the video search and recommendation system
 
 ## 🔦 About Project
@@ -100,4 +102,5 @@ To run the project in your local environment, follow these steps:
 8. Open [http://localhost:3030](http://localhost:3030) to see charts and `dashboards` on `Metabase`
 9. Open [http://localhost:8501](http://localhost:8501) to try out the `video recommendation` app on `Streamlit`
 
-## 🍿 Video
+## 🍿 Video ![alt text](image.png)
+
