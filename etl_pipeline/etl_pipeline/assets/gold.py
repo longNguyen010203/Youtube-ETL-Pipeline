@@ -1,5 +1,7 @@
+import os
 import polars as pl
-from ..partitions import monthly_partitions
+from datetime import datetime
+from pyspark.sql import DataFrame
 
 from dagster import (
     multi_asset,
@@ -9,6 +11,9 @@ from dagster import (
     AssetExecutionContext,
     Output
 )
+
+from ..partitions import monthly_partitions
+from ..resources.spark_io_manager import create_spark_session
 
 
 GROUP_NAME = "gold"
@@ -42,20 +47,29 @@ GROUP_NAME = "gold"
 )
 def gold_videoCategory(context: AssetExecutionContext,
                        silver_videoCategory_cleaned: pl.DataFrame
-) -> Output[pl.DataFrame]:
+) -> Output[DataFrame]:
     """ 
         Compute and Load videoCategory data from silver to gold layer in MinIO
     """
-    pl_data: pl.DataFrame = silver_videoCategory_cleaned
-    context.log.info(f"Load videoCategory data Success with shape {pl_data.shape}")
+    CONFIG = {
+        "endpoint_url": os.getenv("MINIO_ENDPOINT"),
+        "aws_access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "aws_secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    }
+    
+    with create_spark_session(
+        CONFIG, "gold_videoCategory-{}".format(datetime.today())
+    ) as spark:
+        spark_df: DataFrame = spark.createDataFrame(silver_videoCategory_cleaned.to_pandas())
+    context.log.info(f"Load {context.asset_key.path[-1]} to gold layer success 🙂")
     
     return Output(
-        value=pl_data,
+        value=spark_df,
         metadata={
             "file name": MetadataValue.text("videoCategory.pq"),
-            "record count": MetadataValue.int(pl_data.shape[0]),
-            "column count": MetadataValue.int(pl_data.shape[1]),
-            "columns": pl_data.columns
+            "record count": MetadataValue.int(spark_df.count()),
+            "column count": MetadataValue.int(len(spark_df.columns)),
+            "columns": spark_df.columns
         }
     )
     
@@ -89,20 +103,30 @@ def gold_videoCategory(context: AssetExecutionContext,
 )
 def gold_linkVideos(context: AssetExecutionContext,
                     silver_linkVideos_cleaned: pl.DataFrame
-) -> Output[pl.DataFrame]:
+) -> Output[DataFrame]:
     """ 
         Compute and Load linkVideos data from silver to gold layer in MinIO
     """
-    pl_data: pl.DataFrame = silver_linkVideos_cleaned
-    context.log.info(f"Load linkVideos data Success with shape {pl_data.shape}")
+    
+    CONFIG = {
+        "endpoint_url": os.getenv("MINIO_ENDPOINT"),
+        "aws_access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "aws_secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    }
+    
+    with create_spark_session(
+        CONFIG, "gold_linkVideos-{}".format(datetime.today())
+    ) as spark:
+        spark_df: DataFrame = spark.createDataFrame(silver_linkVideos_cleaned.to_pandas())
+    context.log.info(f"Load {context.asset_key.path[-1]} to gold layer success 🙂")
     
     return Output(
-        value=pl_data,
+        value=spark_df,
         metadata={
             "file name": MetadataValue.text("linkVideos.pq"),
-            "record count": MetadataValue.int(pl_data.shape[0]),
-            "column count": MetadataValue.int(pl_data.shape[1]),
-            "columns": pl_data.columns
+            "record count": MetadataValue.int(spark_df.count()),
+            "column count": MetadataValue.int(len(spark_df.columns)),
+            "columns": spark_df.columns
         }
     )
     
@@ -124,7 +148,6 @@ def gold_linkVideos(context: AssetExecutionContext,
                 ],
                 "columns": [
                     "video_id",
-                    # "country_code",
                     "publishedAt",
                     "trending_date",
                     "channelId",
@@ -146,7 +169,6 @@ def gold_linkVideos(context: AssetExecutionContext,
                 ],
                 "columns": [
                     "video_id",
-                    # "country_code",
                     "title",
                     "channelId",
                     "channelTitle",
@@ -155,34 +177,10 @@ def gold_linkVideos(context: AssetExecutionContext,
                     "thumbnail_link",
                     "comments_disabled",
                     "ratings_disabled",
-                    # "description"
                 ]
             },
             group_name=GROUP_NAME
         ),
-        # "gold_metric_stats_by_country": AssetOut(
-        #     key_prefix=["gold", "youtube"],
-        #     io_manager_key="spark_io_manager",
-        #     metadata={
-        #         "primary_keys": [
-        #             "video_id"
-        #         ],
-        #         "columns": [
-        #             "video_id",
-        #             "country_code",
-        #             "title",
-        #             "channelId",
-        #             "channelTitle",
-        #             "categoryId",
-        #             "tags",
-        #             "thumbnail_link",
-        #             "comments_disabled",
-        #             "ratings_disabled",
-        #             "description"
-        #         ]
-        #     },
-        #     group_name=GROUP_NAME
-        # )
     },
     name="gold_metric_trending",
     required_resource_keys={"spark_io_manager"},
@@ -195,48 +193,48 @@ def gold_metric_trending(context: AssetExecutionContext,
     """ 
         Compute and Load trending data from silver to gold layer in MinIO
     """
-    metric: pl.DataFrame = silver_trending_cleaned.select([
-                    "video_id",
-                    # "country_code",
-                    "publishedAt",
-                    "trending_date",
-                    "channelId",
-                    "categoryId",
-                    "view_count",
-                    "likes",
-                    "dislikes",
-                    "comment_count"
-                ])
-    information: pl.DataFrame = silver_trending_cleaned.select([
-                    "video_id",
-                    # "country_code",
-                    "title",
-                    "channelId",
-                    "channelTitle",
-                    "categoryId",
-                    "tags",
-                    "thumbnail_link",
-                    "comments_disabled",
-                    "ratings_disabled",
-                    # "description"
-                ])
     
-    # metric_stats_by_country: pl.DataFrame = metric.group_by("country_code").agg(
-    #     [
-    #         pl.sum("view_count").alias("total_views"),
-    #         pl.sum("likes").alias("total_likes"),
-    #         pl.sum("dislikes").alias("total_dislikes"),
-    #         pl.sum("comment_count").alias("total_comments")
-    #     ]
-    # )
+    CONFIG = {
+        "endpoint_url": os.getenv("MINIO_ENDPOINT"),
+        "aws_access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "aws_secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    }
+    
+    with create_spark_session(
+        CONFIG, "gold_metric_trending-{}".format(datetime.today())
+    ) as spark:
+    
+        metric: DataFrame = spark.createDataFrame(silver_trending_cleaned.select([
+                        "video_id",
+                        "publishedAt",
+                        "trending_date",
+                        "channelId",
+                        "categoryId",
+                        "view_count",
+                        "likes",
+                        "dislikes",
+                        "comment_count"
+                    ]))
+        information: DataFrame = spark.createDataFrame(silver_trending_cleaned.select([
+                        "video_id",
+                        "title",
+                        "channelId",
+                        "channelTitle",
+                        "categoryId",
+                        "tags",
+                        "thumbnail_link",
+                        "comments_disabled",
+                        "ratings_disabled",
+                    ]))
+    context.log.info(f"Load {context.asset_key.path[-1]} to gold layer success 🙂")
     
     return Output(
         value=metric,
         output_name="gold_metric_trending",
         metadata={
             "folder name": MetadataValue.text("metric_trending"),
-            "record count": MetadataValue.int(metric.shape[0]),
-            "column count": MetadataValue.int(metric.shape[1]),
+            "record count": MetadataValue.int(metric.count()),
+            "column count": MetadataValue.int(len(metric.columns)),
             "columns": metric.columns
         }
     ), Output(
@@ -244,18 +242,8 @@ def gold_metric_trending(context: AssetExecutionContext,
         output_name="gold_information_trending",
         metadata={
             "folder name": MetadataValue.text("information_trending"),
-            "record count": MetadataValue.int(information.shape[0]),
-            "column count": MetadataValue.int(information.shape[1]),
+            "record count": MetadataValue.int(information.count()),
+            "column count": MetadataValue.int(len(information.columns)),
             "columns": information.columns
         }
     ),
-    # Output(
-    #     value=metric_stats_by_country,
-    #     output_name="gold_metric_stats_by_country",
-    #     metadata={
-    #         "folder name": MetadataValue.text("metric_stats_by_country"),
-    #         "record count": MetadataValue.int(metric_stats_by_country.shape[0]),
-    #         "column count": MetadataValue.int(metric_stats_by_country.shape[1]),
-    #         "columns": metric_stats_by_country.columns
-    #     }
-    # )

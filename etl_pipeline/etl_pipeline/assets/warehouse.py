@@ -1,8 +1,6 @@
 import polars as pl
 from dagster import AssetExecutionContext
 
-from ..partitions import monthly_partitions
-
 from dagster import (
     multi_asset,
     AssetIn,
@@ -11,6 +9,8 @@ from dagster import (
     AssetExecutionContext,
     Output
 )
+
+from ..partitions import monthly_partitions
 
 
 GROUP_NAME = "warehouse"
@@ -123,7 +123,6 @@ def linkVideos(context: AssetExecutionContext,
                 ],
                 "columns": [
                     "video_id",
-                    # "country_code",
                     "publishedAt",
                     "trending_date",
                     "channelId",
@@ -178,7 +177,6 @@ def metricVideos(context: AssetExecutionContext,
                 ],
                 "columns": [
                     "video_id",
-                    # "country_code",
                     "title",
                     "channelId",
                     "channelTitle",
@@ -187,7 +185,6 @@ def metricVideos(context: AssetExecutionContext,
                     "thumbnail_link",
                     "comments_disabled",
                     "ratings_disabled",
-                    # "description"
                 ]
             },
             group_name=GROUP_NAME

@@ -65,7 +65,7 @@ class SparkIOManager(IOManager):
         return key, tmp_file_path
     
     
-    def handle_output(self, context: OutputContext, obj: pl.DataFrame):
+    def handle_output(self, context: OutputContext, obj: DataFrame):
         key_name, tmp_file_path = self._get_path(context)
         bucket_name = self._config.get("bucket")
         ## ====>
@@ -84,7 +84,7 @@ class SparkIOManager(IOManager):
             key_name, tmp_file_path = f"{key_name}.parquet", tmp_file_path
         
         
-        obj.write_parquet(tmp_file_path)
+        obj.write.mode('overwrite').parquet(tmp_file_path)
  
         with connect_minio(self._config) as client:
             try:
@@ -97,7 +97,7 @@ class SparkIOManager(IOManager):
                     else:
                         print(f"Bucket {bucket_name} already exists")
                     client.fput_object(bucket_name, key_name, tmp_file_path)
-                    row_count = obj.shape[0]
+                    row_count = obj.count()
                     context.add_output_metadata(
                         {
                             "path": key_name, 
@@ -112,7 +112,7 @@ class SparkIOManager(IOManager):
                 raise e
     
     
-    def load_input(self, context: InputContext) -> pl.DataFrame:
+    def load_input(self, context: InputContext) -> DataFrame:
         key_name, tmp_file_path = self._get_path(context)
         bucket_name = self._config.get("bucket")
         
@@ -141,7 +141,9 @@ class SparkIOManager(IOManager):
                     context.log.info(f"INFO -> tmp_file_path: {tmp_file_path}")
                     
                     client.fget_object(bucket_name, key_name, tmp_file_path)
-                    df = pl.read_parquet(tmp_file_path)
+                    
+                    spark: SparkSession = self.get_spark_session(self, appName="Read-Parquet")
+                    df = spark.read.parquet(tmp_file_path)
                     
                     return df
                     
