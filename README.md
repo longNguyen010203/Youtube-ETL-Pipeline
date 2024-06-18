@@ -101,3 +101,4 @@ To run the project in your local environment, follow these steps:
 9. Open [http://localhost:8501](http://localhost:8501) to try out the `video recommendation` app on `Streamlit`
 
 ## 🍿 Video
+[Screencast from 2024-06-16 22-00-03.webm](https://github.com/longNguyen010203/Youtube-ETL-Pipeline/assets/168116061/33eb73b4-f4f0-48f6-9c2d-a4614e1f4ec5)
